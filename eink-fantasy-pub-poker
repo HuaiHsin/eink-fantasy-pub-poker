@@ -1,0 +1,2109 @@
+<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Poker RPG: Config Edition</title>
+    <style>
+        /* === 1. 基礎設定 (預設：高對比彩色) === */
+        :root {
+            --bg: #ffffff;
+            --ink: #000000;
+            --paper: #ffffff;
+            --zone-bg: #f4f4f4;
+            /* 稍微深一點的灰，增加區域對比 */
+            --border: 3px solid var(--ink);
+            --shadow: 4px 4px 0px rgba(0, 0, 0, 0.2);
+            --red-suit: #cc0000;
+            /* 深紅色，黑白機顯示為深灰 */
+            --btn-hover: #e0e0e0;
+        }
+
+        /* [新增] 黑白模式 (B&W Mode) - 強制純黑白灰，適合電子紙 */
+        body.bw-mode {
+            --bg: #ffffff;
+            --ink: #000000;
+            --paper: #ffffff;
+            --zone-bg: #e8e8e8;
+            /* 更明顯的灰階區隔 */
+            --shadow: 4px 4px 0px #000000;
+            /* 實心黑影，無透明度 */
+            --red-suit: #000000;
+            /* 紅心方塊變黑色 (靠圖案區分) */
+            --btn-hover: #000000;
+        }
+
+        /* 讓黑白模式下的按鈕 Hover 變成反白 */
+        body.bw-mode button.game-btn:active {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: "Courier New", monospace;
+            background: var(--bg);
+            color: var(--ink);
+            padding: 0;
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .bold {
+            font-weight: 900;
+        }
+
+        /* === UI 元件 === */
+        .stone-box {
+            border: var(--border);
+            padding: 12px;
+            margin-bottom: 12px;
+            background: var(--paper);
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            padding: 10px;
+            background: var(--zone-bg);
+            border-top: 2px solid #ccc;
+        }
+
+        button.game-btn {
+            flex: 1;
+            padding: 16px;
+            font-family: inherit;
+            font-size: 18px;
+            font-weight: 900;
+            background: white;
+            border: 3px solid black;
+            border-radius: 6px;
+            box-shadow: 0 4px 0 black;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: transform 0.1s;
+        }
+
+        button.game-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 black;
+        }
+
+        button.game-btn:disabled {
+            opacity: 0.4;
+            border-style: dashed;
+            pointer-events: none;
+            box-shadow: none;
+            transform: none;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .blink-cursor::after {
+            content: " █";
+            animation: blink 1s step-end infinite;
+        }
+
+        /* [修正] 縮小箭頭大小並調整對齊，避免撐開版面 */
+        .turn-arrow {
+            display: inline-block;
+            animation: blink 1s step-end infinite;
+            font-size: 12px;
+            /* 強制設為較小字體 */
+            vertical-align: middle;
+            /* 垂直置中 */
+            margin-left: 8px;
+            position: relative;
+            top: -2px;
+        }
+
+        /* === 場景樣式 === */
+        #scene-start {
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* [修正] 移除旋轉效果，讓外框變正 */
+        .title-box {
+            border: 6px double black;
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            /* transform: rotate(-1deg); 已移除 */
+        }
+
+        #scene-map {
+            padding: 20px;
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIklEQVQIW2NkQAXYwJABAAAA7AAB7G1s2AAAAABJRU5ErkJggg==');
+        }
+
+        .wanted-poster {
+            border: 4px solid black;
+            background: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            position: relative;
+            text-align: center;
+        }
+
+        .wanted-poster::before {
+            content: '📍';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+        }
+
+        .wanted-poster:active {
+            transform: scale(0.98);
+        }
+
+        .wanted-title {
+            font-size: 20px;
+            font-weight: 900;
+            text-decoration: underline;
+            margin-bottom: 5px;
+        }
+
+        .wanted-reward {
+            font-size: 12px;
+            background: black;
+            color: white;
+            display: inline-block;
+            padding: 2px 6px;
+            margin-top: 5px;
+        }
+
+        .event-poster {
+            border-color: #444;
+            background: #fffdf0;
+        }
+
+        .event-poster::before {
+            content: '❓';
+        }
+
+        .camp-poster {
+            border-color: #8b4513;
+            background: #fff0e0;
+        }
+
+        .camp-poster::before {
+            content: '🔥';
+        }
+
+        /* Battle Scene */
+        #scene-battle {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #ddd;
+        }
+
+        .zone-enemy {
+            background: var(--zone-bg);
+            padding: 10px;
+            border-bottom: 2px solid #999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .zone-table {
+            flex: 1;
+            background: #fff;
+            background-image: radial-gradient(#ccc 1px, transparent 1px);
+            background-size: 10px 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .zone-player {
+            background: var(--zone-bg);
+            padding: 10px 10px 0 10px;
+            border-top: 2px solid #999;
+        }
+
+        /* === [優化] 頂部狀態列樣式 === */
+        .battle-status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            gap: 8px;
+        }
+
+        .status-pill {
+            border: 2px solid black;
+            background: white;
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-label {
+            background: black;
+            color: white;
+            padding: 0 4px;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .field-icon {
+            font-size: 24px;
+            /* 加大圖示 */
+            font-weight: bold;
+        }
+
+        .field-info {
+            font-size: 16px;
+            font-weight: 900;
+        }
+
+        .hud-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .hp-frame {
+            width: 100%;
+            height: 20px;
+            border: 2px solid black;
+            background: white;
+            position: relative;
+            margin-top: 2px;
+        }
+
+        .hp-fill {
+            height: 100%;
+            width: 100%;
+            transition: width 0.2s;
+            background: repeating-linear-gradient(-45deg, #000, #000 4px, #333 4px, #333 8px);
+        }
+
+        .hp-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            mix-blend-mode: difference;
+        }
+
+        /* Card Area */
+        .card-area {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: center;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .card {
+            width: 23%;
+            aspect-ratio: 0.72;
+            border: 2px solid black;
+            border-radius: 4px;
+            background: white;
+            position: relative;
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .card-placeholder {
+            width: 23%;
+            aspect-ratio: 0.72;
+            border: 2px dashed #bbb;
+            border-radius: 4px;
+        }
+
+        .card.selected {
+            background: black;
+            color: white;
+            transform: translateY(-5px);
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5);
+            border: 2px solid white;
+            outline: 2px solid black;
+        }
+
+        .card.selected .suit-red,
+        .card.selected .suit-black {
+            color: white !important;
+        }
+
+        .card.disabled {
+            opacity: 0.2;
+            pointer-events: none;
+            filter: grayscale(100%);
+        }
+
+        .suit-big {
+            font-size: 32px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .rank-txt {
+            font-size: 16px;
+            font-weight: 900;
+            position: absolute;
+            top: 2px;
+            left: 4px;
+        }
+
+        .rank-bot {
+            font-size: 16px;
+            font-weight: 900;
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            transform: rotate(180deg);
+        }
+
+        .joker-txt {
+            font-size: 10px;
+            font-weight: 900;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+        }
+
+        .joker-bot {
+            font-size: 10px;
+            font-weight: 900;
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            transform: rotate(180deg);
+        }
+
+        /* [修正] 使用變數控制紅色 */
+        .suit-red {
+            color: var(--red-suit);
+            font-weight: 900;
+        }
+
+        .suit-black {
+            color: var(--ink);
+        }
+
+        .card-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: white;
+            border: 1px solid black;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            line-height: 16px;
+            text-align: center;
+            z-index: 5;
+        }
+
+        #msg-box {
+            background: black;
+            color: white;
+            text-align: center;
+            padding: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            min-height: 28px;
+        }
+
+        .relic-bar {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            min-height: 24px;
+            margin: 4px 0;
+            flex-wrap: wrap;
+        }
+
+        .relic-icon {
+            width: 24px;
+            height: 24px;
+            border: 1px solid black;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 1px 1px 0px #999;
+            cursor: pointer;
+        }
+
+        /* Event Scene */
+        #scene-event {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #fffaf0;
+        }
+
+        .event-image {
+            font-size: 60px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .event-text {
+            font-size: 16px;
+            line-height: 1.6;
+            border: 3px solid black;
+            padding: 20px;
+            background: white;
+            margin-bottom: 20px;
+            box-shadow: 4px 4px 0px #ccc;
+            flex: 1;
+        }
+
+        .event-btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        /* Modals */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-box {
+            background: white;
+            border: 4px double black;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.2);
+        }
+
+        .kao {
+            font-size: 20px;
+            font-weight: 900;
+            white-space: pre;
+            letter-spacing: -1px;
+        }
+
+        .ascii-art {
+            font-size: 6px;
+            line-height: 6px;
+            text-align: left;
+            overflow: hidden;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* === [新增] 對話事件專用樣式 === */
+        .chat-box {
+            flex: 1;
+            border: 3px solid black;
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .chat-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .chat-row.right {
+            flex-direction: row-reverse;
+        }
+
+        /* 玩家在右邊 */
+
+        .chat-tag {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #eee;
+            border: 2px solid black;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+            height: fit-content;
+        }
+
+        .chat-row.right .chat-tag {
+            background: #e0f0ff;
+        }
+
+        .chat-msg {
+            font-size: 14px;
+            line-height: 1.5;
+            padding-top: 4px;
+            word-break: break-all;
+        }
+
+        /* 隱藏舊的元素用 */
+        .hidden-in-chat {
+            display: none !important;
+        }
+
+        /* === [新增] 牌型說明格線與迷你卡樣式 === */
+        .guide-container {
+            border: 2px solid black;
+            margin-top: 10px;
+        }
+
+        .guide-row {
+            display: flex;
+            border-bottom: 1px solid black;
+            align-items: center;
+        }
+
+        .guide-row:last-child {
+            border-bottom: none;
+        }
+
+        .guide-info {
+            flex: 0 0 45%;
+            padding: 6px;
+            border-right: 1px solid black;
+            font-size: 12px;
+            text-align: left;
+            background: var(--zone-bg);
+        }
+
+        .guide-cards {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            gap: 3px;
+            padding: 6px;
+            background: #fff;
+        }
+
+        /* 迷你卡片樣式 */
+        .m-card {
+            width: 20px;
+            height: 28px;
+            border: 1px solid black;
+            border-radius: 2px;
+            background: white;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 900;
+        }
+
+        .m-card.red {
+            color: var(--red-suit);
+        }
+
+        .m-card.black {
+            color: black;
+        }
+
+        .m-card-rank {
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            font-size: 8px;
+            line-height: 1;
+        }
+
+        /* === [新增] 戰鬥日誌樣式 === */
+        .log-entry {
+            border-bottom: 1px dashed #999;
+            padding: 6px 0;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-turn {
+            font-weight: 900;
+            font-size: 10px;
+            background: black;
+            color: white;
+            padding: 2px 4px;
+            margin-right: 5px;
+        }
+
+        /* === [新增] 結算畫面樣式 === */
+        .death-summary {
+            text-align: left;
+            padding: 10px;
+            background: #fff;
+            font-family: "Courier New", monospace;
+            /* 等寬字體更有收據感 */
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 16px;
+            border-bottom: 1px dotted #ccc;
+            /* 引導線 */
+        }
+
+        .summary-row span.bold {
+            font-weight: 900;
+            font-size: 18px;
+        }
+
+        .divider {
+            border-top: 2px dashed black;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        /* 剪刀裝飾，暗示可以剪下保存 */
+        .divider::after {
+            content: '✂️';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 5px;
+            font-size: 12px;
+        }
+
+        .relic-section {
+            text-align: center;
+        }
+
+        .relic-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .end-relic {
+            font-size: 24px;
+            border: 1px solid black;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 2px 2px 0 #999;
+        }
+
+        .quote {
+            text-align: center;
+            font-style: italic;
+            font-size: 14px;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        /* 讓 Modal 變寬一點，更有氣勢 */
+        #modal-gameover .modal-box {
+            max-width: 450px;
+            border: 6px double black;
+            /* 雙線邊框更有 RPG 感 */
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="scene-start">
+        <div class="title-box">
+            <h1 style="font-size: 24px; margin-bottom: 5px;">我想玩遊戲</h1>
+            <p style="font-size: 12px;">即使是電子閱讀器</p>
+        </div>
+        <div style="margin: 20px 0;">
+            <pre class="ascii-art"><span id="cover-art"></span></pre>
+        </div>
+        <button class="game-btn blink-cursor" onclick="Game.startGame()" style="width: 80%;">START ADVENTURE</button>
+        <button class="game-btn" onclick="Game.toggleRules()" style="width: 80%; margin-top: 10px;">📜 HOW TO
+            PLAY</button>
+        <button class="game-btn" onclick="Game.debugStart()" style="width: 80%; margin-top: 10px; background: #eee; font-size: 14px;">🚧 DEBUG: SKIP TUTORIAL</button>
+        <button class="game-btn" onclick="Game.toggleColor()" style="width: 80%; margin-top: 10px;">🎨 COLOR /
+            B&amp;W</button>
+    </div>
+
+    <div id="scene-map" class="hidden">
+        <div style="text-align: center; margin-bottom: 20px; font-size: 24px; font-weight: 900; background: white; border: 2px solid black; padding: 10px;">
+            關卡 <span id="map-stage">1</span></div>
+        <div class="relic-bar" id="map-relics"></div>
+        <div id="map-choices" style="padding: 10px;"></div>
+    </div>
+
+    <div id="scene-event" class="hidden">
+        <div class="stone-box bold center" style="font-size: 20px;" id="event-title">EVENT</div>
+        <div class="event-image" id="event-kao"></div>
+        <div class="event-text" id="event-desc"></div>
+        <div id="event-chat-box" class="chat-box hidden"></div>
+        <div class="event-btn-group" id="event-choices"></div>
+    </div>
+
+    <div id="scene-battle" class="hidden">
+        <div class="zone-enemy">
+            <div class="kao" id="e-kao"></div>
+            <div class="hud-row" style="justify-content: center; gap: 10px; margin-top: 5px;"><span id="e-tags"></span>
+            </div>
+            <div class="hp-frame">
+                <div class="hp-fill" id="e-hp-bar"></div>
+                <div class="hp-text" id="e-hp-txt"></div>
+            </div>
+        </div>
+        <div class="zone-table">
+            <div class="battle-status-bar">
+                <div class="status-pill">
+                    <span class="status-label">FIELD</span>
+                    <span id="field-icon">-</span>
+                    <span id="field-rate" style="font-size: 12px;">1.0x</span>
+                </div>
+                <div class="status-pill"><span>🂠 DECK: <span id="deck-count">0</span></span></div>
+            </div>
+
+            <div class="hud-row" style="margin-bottom: 8px; gap: 5px;">
+                <div id="msg-box" style="flex: 1; margin-bottom: 0; min-height: 32px; display: flex; align-items: center; justify-content: center;">
+                    BATTLE START</div>
+                <button class="game-btn" onclick="Game.toggleLog()" style="flex: 0 0 45px; padding: 0; font-size: 18px; height: 32px;">📜</button>
+            </div>
+
+            <div class="card-area" id="card-container"></div>
+        </div>
+        <div class="zone-player">
+            <div class="hud-row">
+                <div class="kao" id="p-kao"></div>
+                <div class="relic-bar" id="battle-relics"></div>
+            </div>
+            <div class="tag-row" id="p-buffs" style="justify-content: flex-start;"></div>
+            <div class="hp-frame" style="margin-bottom: 10px;">
+                <div class="hp-fill" id="p-hp-bar"></div>
+                <div class="hp-text" id="p-hp-txt"></div>
+            </div>
+        </div>
+        <div class="btn-group">
+            <button class="game-btn" id="btn-discard" onclick="Game.onDiscard()" style="background:#fff0f0;">DISCARD</button>
+            <button class="game-btn" onclick="Game.onPlay()" style="background:#f0fff0;">ATTACK</button>
+            <button class="game-btn" onclick="Game.toggleGuide()" style="flex: 0 0 50px; font-size: 20px;">?</button>
+        </div>
+    </div>
+
+    <div id="scene-reward" class="hidden">
+        <div style="padding: 20px; text-align: center;">
+            <h1 style="font-size: 32px; margin-bottom: 10px;">VICTORY</h1>
+            <p id="reward-subtitle" style="margin-bottom: 20px;">Choose your loot</p>
+            <div id="reward-list"></div>
+        </div>
+    </div>
+
+    <div id="modal-guide" class="modal hidden">
+        <div class="modal-box">
+            <h3 id="guide-title" style="border-bottom: 2px solid black; margin-bottom: 10px;">HAND RANKINGS</h3>
+
+            <div id="guide-content" class="guide-text" style="text-align: left; font-size: 13px; line-height: 1.8;">
+            </div>
+
+            <button id="guide-close-btn" class="game-btn" onclick="Game.toggleGuide()" style="margin-top: 15px;">CLOSE</button>
+        </div>
+    </div>
+
+    <div id="modal-relics" class="modal hidden">
+        <div class="modal-box">
+            <h3 style="border-bottom: 2px solid black; margin-bottom: 10px;">MY RELICS</h3>
+            <div id="relic-list-content" style="text-align: left; font-size: 13px; line-height: 1.6; max-height: 300px; overflow-y: auto;"></div>
+            <button class="game-btn" onclick="Game.toggleRelicGuide()" style="margin-top: 15px;">CLOSE</button>
+        </div>
+    </div>
+    <div id="modal-event-result" class="modal hidden">
+        <div class="modal-box">
+            <h3 style="border-bottom: 2px solid black; margin-bottom: 10px;">RESULT</h3>
+            <div id="event-result-msg" style="font-size: 14px; line-height: 1.6; margin-bottom: 20px;"></div>
+            <button class="game-btn" onclick="Game.confirmEventResult()">CONTINUE</button>
+        </div>
+    </div>
+    <div id="modal-gameover" class="modal hidden">
+        <div class="modal-box">
+            <h1 id="go-title" style="font-size: 32px; border-bottom: 4px solid black; margin-bottom: 15px; padding-bottom: 5px;">GAME
+                OVER</h1>
+
+            <div id="go-content">
+            </div>
+
+            <button class="game-btn blink-cursor" onclick="Game.init()" style="margin-top: 20px; width: 100%;">
+                🔄 RESTART 重新開始
+            </button>
+        </div>
+    </div>
+    <div id="modal-rules" class="modal hidden">
+
+        <div class="modal-box">
+            <h3 style="border-bottom: 2px solid black; margin-bottom: 10px;">GAME RULES</h3>
+            <div style="text-align: left; font-size: 13px; line-height: 1.6; max-height: 300px; overflow-y: auto;">
+                <p><b>1. 戰鬥 (Battle)</b><br>從桌面上點選卡牌湊出撲克牌型（如一對、順子）。牌型越強，傷害越高！</p>
+                <br>
+                <p><b>2. 策略 (Strategy)</b><br>每回合手牌有限，善用 <b>DISCARD</b> (棄牌) 來換掉爛牌，尋找關鍵張。</p>
+                <br>
+                <p><b>3. 成長 (Growth)</b><br>擊敗敵人可獲得 <b>Relics</b> (道具)，遭遇隨機事件可強化能力。活下去，挑戰更高層數！</p>
+            </div>
+            <button class="game-btn" onclick="Game.toggleRules()" style="margin-top: 15px;">CLOSE</button>
+        </div>
+    </div>
+
+    <div id="modal-log" class="modal hidden">
+        <div class="modal-box">
+            <h3 style="border-bottom: 2px solid black; margin-bottom: 10px;">BATTLE LOG</h3>
+            <div id="log-content" style="text-align: left; font-size: 13px; line-height: 1.6; max-height: 350px; overflow-y: auto; background: var(--zone-bg); padding: 10px; border: 1px solid black;">
+            </div>
+            <button class="game-btn" onclick="Game.toggleLog()" style="margin-top: 15px;">CLOSE</button>
+        </div>
+    </div>
+
+
+    <script>
+
+        /* =========================================================================
+           [0] 多語系系統 (Localization System)
+           放在最前面，確保後面的程式碼都能呼叫 T()
+           ========================================================================= */
+
+        // 1. 偵測瀏覽器語言
+        const USER_LANG = (navigator.language || navigator.userLanguage).toLowerCase().startsWith('zh') ? 'zh' : 'en';
+
+        // 2. 翻譯輔助函式
+        const T = (data) => {
+            if (typeof data === 'object' && data !== null) {
+                return data[USER_LANG] || data['en'] || "";
+            }
+            if (typeof data === 'string' && C_TEXT[data]) {
+                return C_TEXT[data][USER_LANG] || C_TEXT[data]['en'];
+            }
+            return data;
+        };
+
+        // 3. 介面文字字典
+        const C_TEXT = {
+            TITLE_SUB: { en: "Config Edition", zh: "自定義版本" },
+            BTN_START: { en: "START ADVENTURE", zh: "開始冒險" },
+            BTN_DEBUG: { en: "🚧 DEBUG: SKIP TUTORIAL", zh: "🚧 測試：跳過教學" },
+            BTN_RULES: { en: "📜 HOW TO PLAY", zh: "📜 遊戲說明" },
+            BTN_COLOR: { en: "🎨 COLOR / B&W", zh: "🎨 色彩切換" },
+            TITLE_HANDS: { en: "HAND RANKINGS", zh: "牌型說明" },
+            BTN_CLOSE: { en: "CLOSE", zh: "關閉" },
+            BTN_DISCARD: { en: "DISCARD", zh: "棄牌" },
+            BTN_ATTACK: { en: "ATTACK", zh: "攻擊" },
+            FLOOR: { en: "FLOOR", zh: "層數" },
+            HP: { en: "HP", zh: "生命" },
+            ATK: { en: "ATK", zh: "攻擊" },
+            CD: { en: "CD", zh: "冷卻" },
+            DECK: { en: "DECK", zh: "牌庫" },
+            FIELD: { en: "FIELD", zh: "場地" },
+            YOU: { en: "YOU", zh: "你" },
+            EVENT: { en: "EVENT", zh: "事件" },
+            CAMPFIRE: { en: "CAMPFIRE", zh: "營地" },
+            VICTORY: { en: "VICTORY", zh: "勝利" },
+            DEFEAT: { en: "DEFEAT", zh: "失敗" },
+            CLEARED: { en: "Dungeon Cleared!", zh: "迷宮通關！" },
+            RESTART: { en: "TRY AGAIN", zh: "重新開始" },
+            GAME_OVER_MSG: { en: "Died at floor", zh: "死於層數" },
+            SAFE_ZONE: { en: "SAFE ZONE", zh: "安全區域" },
+            MYSTERY: { en: "MYSTERY", zh: "神秘事件" },
+            TUTORIAL: { en: "TUTORIAL", zh: "教學關卡" },
+            HP_REC: { en: "HP Recovered", zh: "生命已恢復" },
+            LOST: { en: "Lost", zh: "失去了" },
+            GET: { en: "Get", zh: "獲得" },
+            PICK_LOOT: { en: "Choose your loot", zh: "選擇你的戰利品" },
+            PICK_ELITE: { en: "Elite Kill! Pick 2 items", zh: "擊殺菁英！選 2 個獎勵" },
+            PICK_NORMAL: { en: "Victory! Pick 1 item", zh: "勝利！選 1 個獎勵" },
+            MSG_START: { en: "Draft from the table!", zh: "請從桌面上選牌！" },
+            MSG_DISCARD: { en: "Cards discarded.", zh: "手牌已丟棄。" },
+            MSG_NO_DISC: { en: "🚫 No Discards!", zh: "🚫 無法再棄牌！" },
+            MSG_LOCKED: { en: "🚫 Locked!", zh: "🚫 被鎖定！" },
+            MSG_SELECT: { en: "⚠️ Select cards!", zh: "⚠️ 請選擇卡牌！" },
+            MSG_SUIT_BAN: { en: "🚫 Suit Banned!", zh: "🚫 花色被禁用！" },
+            MSG_WEAK: { en: "Weakened!", zh: "虛弱！傷害減半" },
+            MSG_DODGE: { en: "👢 DODGE!", zh: "👢 閃避！" },
+            MSG_BLOCK: { en: "🧬 Blocked!", zh: "🧬 傷害無效！" },
+            MSG_ENEMY_NO_CARD: { en: "Enemy has no cards!", zh: "敵人沒牌了！" },
+            MSG_WAIT: { en: "waits...", zh: "正在等待..." },
+            MSG_YOUR_TURN: { en: "Your turn.", zh: "輪到你了。" },
+            HAND_HIGH: { en: "High Card", zh: "高牌" },
+            HAND_PAIR: { en: "Pair", zh: "一對" },
+            HAND_2PAIR: { en: "Two Pair", zh: "兩對" },
+            HAND_3KIND: { en: "Three of a Kind", zh: "三條" },
+            HAND_STRAIGHT: { en: "Straight", zh: "順子" },
+            HAND_FLUSH: { en: "Flush", zh: "同花" },
+            HAND_FULL: { en: "Full House", zh: "葫蘆" },
+            HAND_4KIND: { en: "Four of a Kind", zh: "鐵支" },
+            HAND_STR_FLUSH: { en: "Straight Flush", zh: "同花順" },
+            HAND_5KIND: { en: "Five of a Kind", zh: "五條" }
+        };
+        /* =========================================================================
+           PART 1: GAME ENGINE (CORE LOGIC)
+           ⚠️ 建議不要修改此區塊，除非您要改變遊戲核心規則。
+           請捲動到最底部的 "USER CONFIG" 區域進行遊戲內容修改。
+           ========================================================================= */
+
+        const TABLE_MAX = 8;
+        const SUITS = ['s', 'h', 'd', 'c'];
+        const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
+        // Config Placeholders (Will be loaded from bottom)
+        let C_RELICS = [], C_EVENTS = [], C_SKILLS = [], C_LEVELS = {}, C_CAMPFIRE = {}, C_VISUALS = {}, C_MONSTER_PARTS = {}, C_MONSTER_NAMES = {};
+
+        const Data = {
+            SUIT_META: { 's': { sym: '♠', style: 'suit-black' }, 'h': { sym: '♥', style: 'suit-red' }, 'd': { sym: '♦', style: 'suit-red' }, 'c': { sym: '♣', style: 'suit-black' }, 'j': { sym: '🃏', style: 'suit-black' } },
+            VALUES: { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14, 'JO': 15 },
+            FIELD_FACTORS: [
+                { id: 'none', name: 'None', rate: 1.0, suit: null, icon: '-', desc: { en: 'Normal', zh: '無異常' } },
+                // 原有花色加成
+                { id: 'c_up', name: 'Club+', rate: 1.5, suit: 'c', icon: '♣', desc: { en: 'Clubs Stronger', zh: '梅花增強' } },
+                { id: 'd_up', name: 'Dia+', rate: 1.5, suit: 'd', icon: '♦', desc: { en: 'Diamonds Stronger', zh: '方塊增強' } },
+                { id: 'h_up', name: 'Hrt+', rate: 1.5, suit: 'h', icon: '♥', desc: { en: 'Hearts Stronger', zh: '紅心增強' } },
+                { id: 's_up', name: 'Spd+', rate: 1.5, suit: 's', icon: '♠', desc: { en: 'Spades Stronger', zh: '黑桃增強' } },
+                // [新增] 異常場地 (Anomalies)
+                { id: 'fog', name: 'Fog', rate: 1.0, suit: null, icon: '🌫️', special: 'blind', desc: { en: 'Blind Cards', zh: '濃霧：點數隱藏' } },
+                { id: 'thorns', name: 'Thorns', rate: 1.0, suit: null, icon: '🌵', special: 'pain', desc: { en: 'Play = Hurt', zh: '荊棘：出牌自傷' } },
+                { id: 'grav', name: 'Gravity', rate: 0.5, suit: null, icon: '⚓', special: 'heavy', desc: { en: 'High Cards Weak', zh: '重力：大牌虛弱' } },
+                { id: 'wind', name: 'Storm', rate: 1.0, suit: null, icon: '🌀', special: 'shuffle', desc: { en: 'Auto Shuffle', zh: '暴風：每回洗牌' } }
+            ],
+            AI_TYPES: { RANDOM: '🎲 Random', LOW: '⬇️ Low', HIGH: '⬆️ High', MAX_HAND: '★ Max', MIN_HAND: '▫️ Min' },
+            HAND_SCORES: { 'Five of a Kind': [150, 10], 'Straight Flush': [100, 8], 'Four of a Kind': [60, 7], 'Full House': [40, 4], 'Flush': [35, 4], 'Straight': [30, 4], 'Three of a Kind': [30, 3], 'Two Pair': [20, 2], 'Pair': [10, 2], 'High Card': [5, 1] },
+        };
+
+        // 牌型名稱對照表 (用於翻譯)
+        const HAND_KEY_MAP = {
+            'Five of a Kind': 'HAND_5KIND', 'Straight Flush': 'HAND_STR_FLUSH', 'Four of a Kind': 'HAND_4KIND',
+            'Full House': 'HAND_FULL', 'Flush': 'HAND_FLUSH', 'Straight': 'HAND_STRAIGHT',
+            'Three of a Kind': 'HAND_3KIND', 'Two Pair': 'HAND_2PAIR', 'Pair': 'HAND_PAIR', 'High Card': 'HAND_HIGH'
+        };
+
+        const Utils = {
+            randInt: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
+            pick: arr => arr[Math.floor(Math.random() * arr.length)],
+            shuffle: arr => arr.sort(() => Math.random() - 0.5),
+            delay: ms => new Promise(res => setTimeout(res, ms)),
+            chance: prob => Math.random() < prob
+        };
+
+        const Generator = {
+            genEnemy: function (stage) {
+                const isElite = (stage % 5 === 0); // 每 5 層固定菁英
+                const scale = Math.pow(1.15, stage - 1); // 基礎指數成長
+
+                // 1. 基礎數值
+                let hp = Math.floor(200 * scale * (isElite ? 1.5 : 1));
+                let atk = Math.floor((10 + stage) * (isElite ? 1.3 : 1));
+                let cd = isElite ? Utils.randInt(2, 3) : 3;
+
+                // 2. 名稱生成
+                const adj = Utils.pick(C_MONSTER_NAMES.Adj);
+                const noun = Utils.pick(C_MONSTER_NAMES.Noun);
+                let nameEn = `${adj.en} ${noun.en}`;
+                let nameZh = `${adj.zh}${noun.zh}`;
+
+                // 3. [新增] 詞綴系統 (Floor 3 開始出現，機率 40% + 層數加成)
+                let prefix = null;
+                if (stage >= 3 && (Utils.chance(0.4 + (stage * 0.02)) || isElite)) {
+                    prefix = Utils.pick(C_MONSTER_PREFIX);
+                    // 套用詞綴修正
+                    hp = Math.floor(hp * prefix.mod.hp);
+                    atk = Math.floor(atk * prefix.mod.atk);
+                    cd = Math.max(1, cd + prefix.mod.cd); // CD 至少為 1
+
+                    // 組合新名字
+                    nameEn = `${prefix.en} ${nameEn}`;
+                    nameZh = `${prefix.zh}${noun.zh}`;
+                }
+
+                const name = { en: nameEn, zh: nameZh };
+
+                // 4. AI 演進 (越後期越聰明)
+                let ai = Data.AI_TYPES.RANDOM;
+                if (stage > 3) ai = Utils.pick([Data.AI_TYPES.LOW, Data.AI_TYPES.HIGH]);
+                if (stage > 8) ai = Data.AI_TYPES.HIGH;
+                if (stage > 12 || isElite) ai = Data.AI_TYPES.MAX_HAND;
+
+                // 5. 顏文字生成
+                const bp = Utils.pick(C_MONSTER_PARTS.Brackets);
+                const face = `${bp[0]}${Utils.pick(C_MONSTER_PARTS.Eye)}${Utils.pick(C_MONSTER_PARTS.Mouth)}${Utils.pick(C_MONSTER_PARTS.Eye)}${bp[1]}`;
+                const kao = (isElite ? '👑' : '') + (prefix ? '⚡' : '') + face;
+
+                // 6. 技能生成 (後期機率增加)
+                let skill = null;
+                if (Utils.chance(isElite ? 1.0 : (stage > 3 ? 0.4 : 0.0))) skill = Utils.pick(C_SKILLS);
+
+                return { id: Math.random(), name, kao, hp, maxHp: hp, atk, cd, maxCd: cd, ai, isElite, skill };
+            }
+        };
+
+        const BuffSys = {
+            activeBuffs: [],
+            add: function (type, val, duration, name) {
+                let existing = this.activeBuffs.find(b => b.type === type && b.val === val);
+                if (existing) existing.duration = duration; else this.activeBuffs.push({ type, val, duration, name });
+                Game.renderBuffs();
+            },
+            tick: function () { this.activeBuffs.forEach(b => b.duration--); this.activeBuffs = this.activeBuffs.filter(b => b.duration > 0); Game.renderBuffs(); },
+            clear: function () { this.activeBuffs = []; },
+            isSuitBanned: function (suit) { return this.activeBuffs.some(b => b.type === 'ban_suit' && b.val === suit); },
+            isDiscardBanned: function () { return this.activeBuffs.some(b => b.type === 'no_disc'); },
+            isWeak: function () { return this.activeBuffs.some(b => b.type === 'weak'); }
+        };
+
+        const Game = {
+            state: { stage: 1, storyIndex: 0, p_hp: 100, p_max: 100, deck: [], table: [], selected: [], enemy: null, field: null, turn: 'player', relics: [], discLeft: 3, rewardPicks: 0, tableMax: 8, hint: "", trainBonus: 0, logs: [], turnCount: 1, maxDmg: 0, killCount: 0, startTime: null },
+
+            init: function () {
+                this.state.stage = 1;
+                this.state.p_hp = 100;
+                this.state.p_max = 100;
+                this.state.trainBonus = 0;
+                this.state.relics = [];
+                this.state.battleRewardRule = null;
+                this.state.storyIndex = 0;
+                BuffSys.clear();
+
+
+                document.querySelectorAll('.modal').forEach(e => e.classList.add('hidden'));
+                document.getElementById('cover-art').innerText = C_VISUALS.CoverArt;
+
+                // [UI] 更新標題與按鈕文字
+                document.querySelector('.title-box p').innerText = T('TITLE_SUB');
+                document.querySelector('button[onclick="Game.startGame()"]').innerText = T('BTN_START');
+                document.querySelector('button[onclick="Game.debugStart()"]').innerText = T('BTN_DEBUG');
+                // 如果有加這兩顆按鈕的話
+                const btnRules = document.querySelector('button[onclick="Game.toggleRules()"]');
+                if (btnRules) btnRules.innerText = T('BTN_RULES');
+                const btnColor = document.querySelector('button[onclick="Game.toggleColor()"]');
+                if (btnColor) btnColor.innerText = T('BTN_COLOR');
+
+                this.showScene('scene-start');
+            },
+
+            startGame: function () {
+                this.state.startTime = Date.now();
+                this.state.maxDmg = 0;
+                this.state.killCount = 0;
+                this.state.storyIndex = 0;
+
+                if (USE_STORY_MODE) {
+                    // [新增] 劇情模式直接從第 4 層開始，跳過教學關
+                    this.state.stage = 4;
+                    this.nextStoryStep();
+                } else {
+                    // 非劇情模式，從第 1 層開始（包含教學關）
+                    this.state.stage = 1;
+                    this.genMap();
+                }
+            },
+            // 事件結果點擊 CONTINUE 後
+            confirmEventResult: function () {
+                document.getElementById('modal-event-result').classList.add('hidden');
+                // [修正] 優先檢查劇情模式
+                if (USE_STORY_MODE && this.state.storyIndex < C_STORY_FLOW.length) {
+                    // 劇情還在進行中，繼續下一步
+                    this.nextStoryStep();
+                } else {
+                    // [重要修正] 劇情已結束或非劇情模式，正常增加層數
+                    if (USE_STORY_MODE && this.state.stage < 4) {
+                        // 劇情剛結束，跳過教學關，直接到第 4 層
+                        this.state.stage = 4;
+                    } else {
+                        this.state.stage++;
+                    }
+                    this.genMap();
+                }
+            },
+            debugStart: function () { this.state.stage = 4; this.genMap(); },
+            getRelicBonus: function () { let bonus = { chip: 0, mult: 0, disc: 0, hp: 0 }; this.state.relics.forEach(r => { for (let k in r.effect) bonus[k] += r.effect[k]; }); return bonus; },
+            hasRelic: function (id) { return this.state.relics.some(r => r.id === id); },
+            getRelicCount: function (id) { return this.state.relics.filter(r => r.id === id).length; },
+            // [新增] 劇情進度管理器
+            nextStoryStep: function () {
+                if (!USE_STORY_MODE || this.state.storyIndex >= C_STORY_FLOW.length) {
+                    // [關鍵修正] 如果剛結束劇情模式，直接跳到第 4 層 (避開 1~3 層的教學固定關)
+                    if (this.state.stage < 4) {
+                        this.state.stage = 4;
+                    } else {
+                        this.state.stage++;
+                    }
+                    this.genMap();
+                    return;
+                }
+
+                const step = C_STORY_FLOW[this.state.storyIndex];
+                this.state.storyIndex++; // 推進索引
+
+                if (step.type === 'event') {
+                    const evt = C_EVENTS.find(e => e.id === step.id);
+                    this.startEvent(evt);
+                } else if (step.type === 'campfire') {
+                    this.startEvent(C_CAMPFIRE);
+                } else if (step.type === 'battle') {
+                    // 進入指定戰鬥，並標記獎勵規則
+                    this.state.battleRewardRule = { type: step.rewardType, id: step.fixedRewardId };
+                    this.startBattle(step.enemy);
+                }
+            },
+            genMap: function () {
+                this.showScene('scene-map');
+                document.getElementById('map-stage').innerText = this.state.stage;
+                this.renderRelicBar('map-relics');
+                const div = document.getElementById('map-choices'); div.innerHTML = '';
+                const fixedLevel = C_LEVELS[this.state.stage];
+
+                if (fixedLevel) {
+                    // [修正] TUTORIAL -> T('TUTORIAL')
+                    this.createMapBtn(div, { kao: fixedLevel.enemy.kao, name: T(fixedLevel.enemy.name) }, 'wanted-poster', () => this.startBattle(null, fixedLevel), T(fixedLevel.name), T('TUTORIAL'));
+                } else {
+                    for (let i = 0; i < 2; i++) {
+                        if (Utils.chance(0.3)) {
+                            if (Utils.chance(0.5)) {
+                                const evt = Utils.pick(C_EVENTS);
+                                // [修正] MYSTERY -> T('MYSTERY')
+                                this.createMapBtn(div, { kao: '?', name: T(evt.name) }, 'wanted-poster event-poster', () => this.startEvent(evt), T('EVENT'), T('MYSTERY'));
+                            } else {
+                                // [修正] SAFE ZONE -> T('SAFE_ZONE')
+                                this.createMapBtn(div, { kao: '🔥', name: T(C_CAMPFIRE.name) }, 'wanted-poster camp-poster', () => this.startEvent(C_CAMPFIRE), T('CAMPFIRE'), T('SAFE_ZONE'));
+                            }
+                        } else {
+                            const e = Generator.genEnemy(this.state.stage);
+                            let skillTxt = e.skill ? ` [${T(e.skill.desc)}]` : '';
+                            this.createMapBtn(div, { kao: e.kao, name: T(e.name) }, 'wanted-poster', () => this.startBattle(e), T(e.name), `${e.ai}${skillTxt}`, `${T('HP')}: ${e.hp} | ${T('ATK')}: ${e.atk}`);
+                        }
+                    }
+                }
+            },
+
+            createMapBtn: function (parent, entity, cls, onClick, title, reward, sub = "") {
+                const btn = document.createElement('div'); btn.className = cls;
+                btn.innerHTML = `<div style="font-size:18px; font-weight:900;">${entity.kao}</div><div class="wanted-title">${title}</div><div style="font-size:12px;">${sub}</div><div class="wanted-reward">${reward}</div>`;
+                btn.onclick = onClick; parent.appendChild(btn);
+            },
+
+            startEvent: function (evtData) {
+                this.showScene('scene-event');
+                document.getElementById('event-title').innerText = evtData.id ? T('EVENT') : T('CAMPFIRE');
+
+                const imgEl = document.getElementById('event-kao');
+                const descEl = document.getElementById('event-desc');
+                const chatBox = document.getElementById('event-chat-box');
+
+                // 判斷是「對話模式」還是「普通模式」
+                if (evtData.dialogue) {
+                    // === 對話模式 ===
+                    imgEl.classList.add('hidden'); // 隱藏大頭貼
+                    descEl.classList.add('hidden'); // 隱藏純文字框
+                    chatBox.classList.remove('hidden'); // 顯示對話框
+                    chatBox.innerHTML = ''; // 清空舊對話
+
+                    // 計算玩家當前表情 (從 renderUI 複製來的邏輯)
+                    const pct = this.state.p_hp / this.state.p_max;
+                    let pKao = C_VISUALS.Kaomoji.Player[0];
+                    if (pct > 0.75) pKao = C_VISUALS.Kaomoji.Player[1];
+                    else if (pct > 0.5) pKao = C_VISUALS.Kaomoji.Player[2];
+                    else if (pct > 0.25) pKao = C_VISUALS.Kaomoji.Player[3];
+
+                    // 生成對話
+                    evtData.dialogue.forEach(line => {
+                        const row = document.createElement('div');
+                        const isPlayer = line.speaker === 'player';
+
+                        // 設定 CSS 樣式 (左邊或右邊)
+                        row.className = isPlayer ? 'chat-row right' : 'chat-row left';
+
+                        // 準備名字與顏文字
+                        const name = isPlayer ? T('YOU') : T(evtData.name);
+                        const kao = isPlayer ? pKao : evtData.kao;
+                        const text = T(line.text);
+
+                        // 組合 HTML: [標籤: 顏文字+名字] + 文字內容
+                        row.innerHTML = `
+                            <div class="chat-tag">
+                                <span style="font-size:14px;">${kao}</span>
+                                <span>${name}</span>
+                            </div>
+                            <div class="chat-msg">${text}</div>
+                        `;
+                        chatBox.appendChild(row);
+                    });
+
+                } else {
+                    // === 普通模式 (舊有邏輯) ===
+                    imgEl.classList.remove('hidden');
+                    descEl.classList.remove('hidden');
+                    chatBox.classList.add('hidden');
+
+                    imgEl.innerText = evtData.kao;
+                    descEl.innerText = T(evtData.text);
+                }
+
+                // 生成按鈕 (共用邏輯)
+                const btnGroup = document.getElementById('event-choices');
+                btnGroup.innerHTML = '';
+                evtData.choices.forEach(c => {
+                    const btn = document.createElement('button');
+                    btn.className = 'game-btn';
+                    btn.innerText = T(c.text);
+                    btn.onclick = () => this.resolveEventChoice(c);
+                    btnGroup.appendChild(btn);
+                });
+            },
+
+            resolveEventChoice: function (choice) {
+                let msg = T(choice.res);
+                switch (choice.type) {
+                    case 'hp': case 'relic_pain':
+                        this.state.p_hp += choice.val;
+                        if (choice.type === 'relic_pain') this.addRandomRelic();
+                        break;
+                    case 'lose_relic':
+                        if (this.state.relics.length > 0) {
+                            const lost = this.state.relics.pop();
+                            msg += ` (${T('LOST')}: ${T(lost.name)})`;
+                        } else {
+                            msg = USER_LANG === 'zh' ? "你沒東西可偷！" : "You had nothing to steal!";
+                        }
+                        break;
+                    case 'hp_buff':
+                        this.state.p_hp += choice.val;
+                        BuffSys.add('bless', null, 5, 'BLESS');
+                        break;
+                    case 'heal': case 'camp_rest':
+                        let heal = choice.val || Math.floor(this.state.p_max * 0.3);
+                        this.state.p_hp = Math.min(this.state.p_hp + heal, this.state.p_max);
+                        msg += ` (${T('HP_REC')}: +${heal})`;
+                        break;
+                    case 'camp_train':
+                        this.state.trainBonus += 10;
+                        break;
+                    case 'gamble':
+                        if (Math.random() < 0.5) {
+                            this.addRandomRelic();
+                            msg = USER_LANG === 'zh' ? "幸運！你找到了寶物！" : "Lucky! You found a relic inside!";
+                        } else {
+                            this.state.p_hp -= 20;
+                            msg = USER_LANG === 'zh' ? "陷阱！你受傷了。" : "It was a trap! You took 20 damage.";
+                        }
+                        break;
+                }
+                if (this.state.p_hp <= 0) { this.gameOver(false); return; }
+                this.showEventResult(msg);
+            },
+
+            showEventResult: function (text) { document.getElementById('event-result-msg').innerText = text; document.getElementById('modal-event-result').classList.remove('hidden'); },
+
+            addRandomRelic: function () { let pool = C_RELICS; this.state.relics.push(pool[Utils.randInt(0, pool.length - 1)]); },
+
+            startBattle: function (enemyGen, fixedLevel = null) {
+                BuffSys.clear(); this.state.selected = []; this.state.turn = 'player';
+
+                // [修改] 場地生成邏輯 - 6層後才開放特殊場地
+                let possibleFields = Data.FIELD_FACTORS.filter(f => !f.special); // 預設只選普通場地
+                if (this.state.stage >= 6) possibleFields = Data.FIELD_FACTORS; // 6層後開放所有場地
+                this.state.field = Utils.pick(possibleFields);
+
+                if (fixedLevel) {
+                    const fe = fixedLevel.enemy;
+                    this.state.enemy = { id: 'fixed', name: fe.name, kao: fe.kao, hp: fe.hp, maxHp: fe.hp, atk: fe.atk, cd: fe.cd, maxCd: fe.cd, ai: fe.ai, isElite: false, skill: null };
+                    this.state.tableMax = fixedLevel.tableMax; this.state.hint = fixedLevel.hint;
+                    if (fixedLevel.fixedCards) {
+                        this.state.deck = []; this.state.table = fixedLevel.fixedCards.map((c, i) => ({ suit: c.s, rank: c.r, val: Data.VALUES[c.r], id: i }));
+                        while (this.state.table.length < this.state.tableMax) this.state.table.push(null);
+                    } else { this.state.deck = this.createDeck(); this.state.table = Array(this.state.tableMax).fill(null); this.dealTable(); }
+                } else {
+                    // 進入普通或劇情戰鬥
+                    this.state.enemy = enemyGen;
+
+                    // [新增防呆] 如果資料沒寫 maxHp 或 kao，自動用當前數值補齊，避免顯示 undefined
+                    if (!this.state.enemy.maxHp) this.state.enemy.maxHp = this.state.enemy.hp;
+                    if (!this.state.enemy.maxCd) this.state.enemy.maxCd = this.state.enemy.cd;
+                    if (!this.state.enemy.kao) this.state.enemy.kao = "👾";
+
+                    this.state.tableMax = 8;
+                    this.state.hint = "";
+                    this.state.deck = this.createDeck();
+                    this.state.table = Array(this.state.tableMax).fill(null);
+                    this.dealTable();
+                }
+                const bonus = this.getRelicBonus(); this.state.p_max = 100 + bonus.hp; this.state.discLeft = 3 + bonus.disc;
+                this.showScene('scene-battle'); this.renderUI(); this.msg(this.state.hint || "Draft from the table!");
+                this.state.logs = [];
+                this.state.turnCount = 1;
+            },
+            createDeck: function () { let d = []; let id = 0; for (let s of SUITS) for (let r of RANKS) d.push({ suit: s, rank: r, val: Data.VALUES[r], id: id++ }); d.push({ suit: 'j', rank: 'JO', val: 15, id: id++ }); d.push({ suit: 'j', rank: 'JO', val: 15, id: id++ }); return Utils.shuffle(d); },
+            dealTable: function () { for (let i = 0; i < this.state.tableMax; i++) if (this.state.table[i] === null && this.state.deck.length > 0) this.state.table[i] = this.state.deck.pop(); },
+            toggleCard: function (idx) {
+                if (this.state.turn !== 'player') return;
+                const pos = this.state.selected.indexOf(idx);
+                if (pos !== -1) this.state.selected.splice(pos, 1); else if (this.state.selected.length < 5) this.state.selected.push(idx);
+                this.renderUI();
+            },
+            onDiscard: async function () {
+                if (this.state.turn !== 'player') return;
+                if (BuffSys.isDiscardBanned()) { this.msg("🚫 Locked!"); return; }
+                if (this.state.discLeft <= 0) { this.msg("🚫 No Discards!"); return; }
+                if (this.state.selected.length === 0) { this.msg("⚠️ Select cards!"); return; }
+                const discardedIndices = [...this.state.selected];
+                const hookCount = this.getRelicCount('r_hook');
+                if (hookCount > 0) {
+                    let dmg = discardedIndices.length * 2 * Math.min(3, hookCount); this.state.enemy.hp = Math.max(0, this.state.enemy.hp - dmg); this.msg(`🪝 Hook: ${dmg} DMG!`);
+                } else this.msg(`Cards discarded.`);
+                discardedIndices.forEach(idx => this.state.table[idx] = null);
+                this.state.discLeft--; this.state.selected = []; this.renderUI(); await Utils.delay(1000);
+                if (this.state.enemy.hp <= 0) this.win(); else this.endTurn();
+            },
+            onPlay: async function () {
+                if (this.state.turn !== 'player') return;
+                if (this.state.selected.length === 0) { this.msg("⚠️ Select cards!"); return; }
+
+                let cards = this.state.selected.map(i => this.state.table[i]);
+                if (cards.find(c => BuffSys.isSuitBanned(c.suit))) { this.msg(`🚫 Suit Banned!`); return; }
+
+                const res = this.evalHand(cards);
+                let multiplier = 1.0;
+
+                // [修改] 場地效果判定
+                const f = this.state.field;
+                if (!this.hasRelic('r_umb')) {
+                    if (f.suit && cards.some(c => c.suit === f.suit)) multiplier = f.rate;
+
+                    // 特殊場地：重力 (Gravity) - 如果有 J,Q,K,A，傷害變 0.5倍
+                    if (f.special === 'heavy' && cards.some(c => c.val >= 11)) {
+                        multiplier = 0.5;
+                        this.msg("⚓ Gravity: Heavy cards weak!");
+                        await Utils.delay(500);
+                    }
+                    // 特殊場地：荊棘 (Thorns) - 出牌扣血
+                    if (f.special === 'pain') {
+                        const selfDmg = 5;
+                        this.state.p_hp -= selfDmg;
+                        this.msg(`🌵 Thorns: -${selfDmg} HP`);
+                        // 檢查是否自殺
+                        if (this.state.p_hp <= 0) { this.renderUI(); await Utils.delay(500); this.gameOver(false); return; }
+                    }
+                }
+
+                let dmg = Math.floor(res.dmg * multiplier);
+                if (this.hasRelic('r_dice')) dmg = Math.floor(dmg * (Math.random() < 0.5 ? 1.15 : 0.85));
+                if (BuffSys.isWeak()) dmg = Math.floor(dmg * 0.5);
+
+                if (dmg > this.state.maxDmg) this.state.maxDmg = dmg;
+                this.state.enemy.hp = Math.max(0, this.state.enemy.hp - dmg);
+
+                // [UI] 顯示場地名稱提示
+                const fieldTag = f.special ? ` [${f.icon}]` : (multiplier !== 1 ? ` (${f.name})` : '');
+                this.msg(`${res.name}: ${dmg}${fieldTag}`);
+
+                this.state.selected.forEach(idx => this.state.table[idx] = null);
+                this.state.selected = []; BuffSys.tick(); this.renderUI(); await Utils.delay(1000);
+                if (this.state.enemy.hp <= 0) this.win(); else this.endTurn();
+            },
+            endTurn: async function () {
+                if (this.hasRelic('r_band')) this.state.p_hp = Math.min(this.state.p_hp + 5, this.state.p_max);
+
+                // [新增] 特殊場地：暴風 (Storm) - 每回合強制重新發牌 (洗掉場上的牌)
+                if (this.state.field.special === 'shuffle' && !this.hasRelic('r_umb')) {
+                    this.msg("🌀 Storm: Table shuffled!");
+                    this.state.table.fill(null); // 清空桌面
+                    await Utils.delay(800);
+                }
+
+                this.dealTable(); this.state.turn = 'enemy'; this.renderUI(); await Utils.delay(1000);
+
+                // 1. 敵人冷卻扣減與攻擊判定
+                this.state.enemy.cd--;
+                if (this.state.enemy.cd <= 0) { await this.enemyAttack(); this.state.enemy.cd = this.state.enemy.maxCd; }
+                else { this.msg(`${this.state.enemy.name} waits...`); await Utils.delay(1000); }
+
+                // 2. 死亡與結束判定
+                if (this.state.p_hp <= 0) { this.gameOver(false); return; }
+                if (this.state.table.every(c => c === null) && this.state.deck.length === 0) {
+                    if (this.state.p_hp > this.state.enemy.hp) this.win(); else this.gameOver(false); return;
+                }
+
+                // 3. 準備下一回合，並增加回合計數器 (turnCount)
+                this.dealTable();
+                this.state.turn = 'player';
+                this.state.turnCount++; // [關鍵修正] 在這裡增加戰鬥日誌的回合數
+                this.renderUI();
+                this.msg("Your turn.");
+            },
+            enemyAttack: async function () {
+                const valid = this.state.table.map((c, i) => c !== null ? i : -1).filter(i => i !== -1);
+                if (valid.length === 0) { this.msg("Enemy has no cards!"); return; }
+                let picked = []; const type = this.state.enemy.ai; const lock = Math.min(3, this.getRelicCount('r_lock'));
+                if (type === Data.AI_TYPES.RANDOM) {
+                    let n = Utils.randInt(1, Math.min(Math.max(1, 3 - lock), valid.length));
+                    let pool = [...valid]; for (let k = 0; k < n; k++) { let r = Utils.randInt(0, pool.length - 1); picked.push(pool[r]); pool.splice(r, 1); }
+                } else if (type === Data.AI_TYPES.MAX_HAND) { picked = this.aiFindBestMatch(valid).slice(0, Math.max(1, 5 - lock)); } else {
+                    let maxIdx = valid[0]; for (let i of valid) if (this.state.table[i].val > this.state.table[maxIdx].val) maxIdx = i; picked.push(maxIdx);
+                }
+                let cards = picked.map(i => this.state.table[i]); const res = this.evalHand(cards);
+                let mul = 1.0; if (this.state.field.suit && cards.some(c => c.suit === this.state.field.suit)) mul = this.state.field.rate;
+                let dmg = Math.floor(res.dmg * mul);
+                if (this.hasRelic('r_gene') && res.name === 'Pair') { dmg = 0; this.msg("🧬 Blocked!"); }
+                else if (this.hasRelic('r_boot') && Math.random() < 0.1) { dmg = 0; this.msg("👢 DODGE!"); }
+                else {
+                    if (this.hasRelic('r_helm')) dmg = Math.max(0, dmg - 10);
+                    this.state.p_hp = Math.max(0, this.state.p_hp - dmg);
+                    let sLog = this.triggerEnemySkill(); this.msg(`Enemy: ${res.name} (${dmg})${sLog}`);
+                }
+                picked.forEach(idx => this.state.table[idx] = null); this.renderUI(); await Utils.delay(1500);
+            },
+            triggerEnemySkill: function () {
+                const e = this.state.enemy; if (!e.skill || !Utils.chance(0.5)) return "";
+                const sk = e.skill; let log = "";
+                switch (sk.type) {
+                    case 'ban_suit': const suit = SUITS[Utils.randInt(0, 3)]; BuffSys.add('ban_suit', suit, 2, 'BAN'); log = ` [BAN]`; break;
+                    case 'no_disc': BuffSys.add('no_disc', null, 2, 'LOCK'); log = ` [LOCK]`; break;
+                    case 'weak': BuffSys.add('weak', null, 1, 'WEAK'); log = ` [WEAK]`; break;
+                } return log;
+            },
+            aiFindBestMatch: function (valid) {
+                let counts = {}; valid.forEach(idx => { const c = this.state.table[idx]; let k = c.val; if (c.rank === 'JO') k = 99; if (!counts[k]) counts[k] = []; counts[k].push(idx); });
+                let keys = Object.keys(counts).sort((a, b) => counts[b].length - counts[a].length || b - a); return counts[keys[0]].slice(0, 5);
+            },
+            checkStraight: function (cards) {
+                if (cards.length < 5) return false; let jokers = cards.filter(c => c.rank === 'JO').length; let u = [...new Set(cards.filter(c => c.rank !== 'JO').map(c => c.val))].sort((a, b) => a - b);
+                if (u.length === 0 && jokers >= 5) return true; if (u.includes(14)) u.unshift(1); let needed = 5 - jokers; if (needed <= 0) return true;
+                for (let i = 0; i <= u.length - needed; i++) { let sub = u.slice(i, i + needed); if (sub[sub.length - 1] - sub[0] <= 4) return true; } return false;
+            },
+            evalHand: function (cards) {
+                let jokers = cards.filter(c => c.rank === 'JO').length; let normal = cards.filter(c => c.rank !== 'JO').sort((a, b) => b.val - a.val); let sum = cards.reduce((a, c) => a + (c.val === 15 ? 0 : c.val), 0);
+                let counts = {}, suits = {}; normal.forEach(c => { counts[c.rank] = (counts[c.rank] || 0) + 1; suits[c.suit] = (suits[c.suit] || 0) + 1; });
+                let isFlush = false, flushSuit = null, maxSuit = 0; for (let s in suits) if (suits[s] > maxSuit) { maxSuit = suits[s]; flushSuit = s; }
+                if (maxSuit + jokers >= 5) isFlush = true;
+                let isStraight = this.checkStraight(cards); let isStrFlush = false;
+                if (isFlush && isStraight) { let fCards = cards.filter(c => c.rank === 'JO' || c.suit === flushSuit); if (fCards.length >= 5 && this.checkStraight(fCards)) isStrFlush = true; }
+                let cVals = Object.values(counts).sort((a, b) => b - a); let maxC = (cVals[0] || 0) + jokers; let name = "High Card";
+                if (maxC >= 5) name = "Five of a Kind"; else if (isStrFlush) name = "Straight Flush"; else if (maxC === 4) name = "Four of a Kind"; else if (maxC >= 3 && (cVals[1] || 0) >= 2 && cards.length >= 5) name = "Full House"; else if (isFlush) name = "Flush"; else if (isStraight) name = "Straight"; else if (maxC === 3) name = "Three of a Kind"; else if ((cVals[0] || 0) >= 2 && (cVals[1] || 0) >= 2) name = "Two Pair"; else if (maxC === 2) name = "Pair";
+                let base = Data.HAND_SCORES[name]; const bonus = this.getRelicBonus();
+                return { name: name, dmg: (base[0] + bonus.chip + this.state.trainBonus + sum) * (base[1] + bonus.mult) };
+            },
+
+            renderUI: function () {
+                const f = this.state.field; const e = this.state.enemy;
+                document.getElementById('deck-count').innerText = this.state.deck.length;
+                document.getElementById('field-icon').innerText = f.icon;
+                document.getElementById('field-rate').innerText = f.rate + 'x';
+                const arrow = '<span class="turn-arrow">◀</span>';
+                // [翻譯] 敵人名字
+                let eHtml = `${e.kao} ${T(e.name)}`; if (this.state.turn === 'enemy') eHtml += arrow; document.getElementById('e-kao').innerHTML = eHtml;
+                // [翻譯] HP, CD
+                document.getElementById('e-hp-txt').innerText = `${T('HP')}: ${e.hp}/${e.maxHp}`; document.getElementById('e-hp-bar').style.width = (e.hp / e.maxHp * 100) + '%';
+                document.getElementById('e-tags').innerHTML = `<span class='tag warn'>${e.ai}</span> <span class='tag'>${T('CD')}:${e.cd}</span>`;
+
+                const pct = this.state.p_hp / this.state.p_max; let pKao = C_VISUALS.Kaomoji.Player[0]; if (pct > 0.75) pKao = C_VISUALS.Kaomoji.Player[1]; else if (pct > 0.5) pKao = C_VISUALS.Kaomoji.Player[2]; else if (pct > 0.25) pKao = C_VISUALS.Kaomoji.Player[3];
+                // [翻譯] YOU
+                let pHtml = `${pKao} ${T('YOU')}`; if (this.state.turn === 'player') pHtml += arrow; document.getElementById('p-kao').innerHTML = pHtml;
+                // [翻譯] HP
+                document.getElementById('p-hp-txt').innerText = `${T('HP')}: ${this.state.p_hp}/${this.state.p_max}`; document.getElementById('p-hp-bar').style.width = (this.state.p_hp / this.state.p_max * 100) + '%';
+                // [翻譯] DISCARD
+                document.getElementById('btn-discard').innerText = `${T('BTN_DISCARD')} (${this.state.discLeft})`; document.getElementById('btn-discard').disabled = BuffSys.isDiscardBanned() || this.state.discLeft <= 0;
+                // [翻譯] ATTACK (動態尋找並翻譯)
+                const btnAttack = document.querySelector('button[onclick="Game.onPlay()"]'); if (btnAttack) btnAttack.innerText = T('BTN_ATTACK');
+
+                const container = document.getElementById('card-container'); container.innerHTML = '';
+                if (this.state.hint) document.getElementById('msg-box').innerText = T(this.state.hint);
+
+                for (let i = 0; i < this.state.tableMax; i++) {
+                    const c = this.state.table[i];
+                    if (c === null) { const p = document.createElement('div'); p.className = 'card-placeholder'; container.appendChild(p); }
+                    else {
+                        const el = document.createElement('div'); const isSel = this.state.selected.includes(i); const meta = Data.SUIT_META[c.suit]; const isBanned = BuffSys.isSuitBanned(c.suit);
+                        el.className = `card ${isSel ? 'selected' : ''} ${isBanned ? 'disabled' : ''}`; if (c.rank === 'JO') el.classList.add('joker');
+                        el.onclick = () => { if (!isBanned) this.toggleCard(i); };
+
+                        // [新增] 濃霧效果：如果場地是 blind，且這張卡「沒有被選取」，則隱藏點數
+                        const isFoggy = f.special === 'blind' && !isSel && !this.hasRelic('r_umb');
+                        const displayRank = isFoggy ? '?' : c.rank;
+
+                        if (f.suit && c.suit === f.suit) { const icon = f.rate > 1 ? '⬆️' : '⬇️'; el.innerHTML += `<div class="card-badge">${icon}</div>`; }
+                        if (c.rank === 'JO') el.innerHTML += `<div class="joker-txt">JOKER</div><div class="suit-big">🃏</div><div class="joker-bot">JOKER</div>`;
+                        else el.innerHTML += `<div class="rank-txt ${meta.style}">${displayRank}</div><div class="suit-big ${meta.style}">${meta.sym}</div><div class="rank-bot ${meta.style}">${displayRank}</div>`;
+                        container.appendChild(el);
+                    }
+                }
+                this.renderBuffs(); this.renderRelicBar('battle-relics'); this.renderRelicBar('map-relics');
+            },
+            showScene: function (id) { document.querySelectorAll('body > div[id^="scene-"]').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); },
+
+            win: function () {
+                this.state.killCount++;
+
+                // 清除戰鬥獎勵規則標記（避免殘留）
+                const wasStoryBattle = (USE_STORY_MODE && this.state.battleRewardRule);
+
+                // 如果是劇情設定的固定獎勵
+                if (wasStoryBattle && this.state.battleRewardRule.type === 'fixed') {
+                    const relic = C_RELICS.find(r => r.id === this.state.battleRewardRule.id);
+                    if (relic) {
+                        this.state.relics.push(relic);
+                        const msg = `${T('VICTORY')}! ${T('GET')}: ${T(relic.name)}`;
+                        this.state.battleRewardRule = null; // [新增] 清除標記
+                        this.showEventResult(msg);
+                    } else {
+                        this.state.battleRewardRule = null; // [新增] 清除標記
+                        this.nextStoryStep();
+                    }
+                } else {
+                    // 否則進入隨機三選一（精英怪給2個，普通怪給1個）
+                    this.state.battleRewardRule = null; // [新增] 清除標記
+                    this.showRewards(this.state.enemy.isElite);
+                }
+            },
+
+            gameOver: function (win) {
+                const modal = document.getElementById('modal-gameover');
+                const title = document.getElementById('go-title');
+                const content = document.getElementById('go-content'); // 我們需要去 HTML 新增這個 ID
+
+                // 1. 計算存活時間
+                const duration = Math.floor((Date.now() - this.state.startTime) / 1000);
+                const min = Math.floor(duration / 60);
+                const sec = duration % 60;
+                const timeStr = `${min}m ${sec}s`;
+
+                // 2. 根據層數給予「稱號」 (Gamification)
+                let rank = "Novice 菜鳥";
+                if (this.state.stage > 3) rank = "Adventurer 冒險者";
+                if (this.state.stage > 7) rank = "Veteran 老手";
+                if (this.state.stage > 12) rank = "Master 大師";
+                if (this.state.stage > 20) rank = "Legend 傳奇";
+
+                // 3. 生成道具列表 HTML
+                let relicHtml = this.state.relics.length > 0
+                    ? this.state.relics.map(r => `<span class="end-relic">${r.icon}</span>`).join('')
+                    : '<span style="color:#999">- 空空如也 -</span>';
+
+                // 4. 設定標題
+                title.innerText = win ? "VICTORY 勝利！" : "R.I.P.";
+
+                // 5. 生成結算單內容
+                content.innerHTML = `
+					<div class="death-summary">
+						<div class="summary-row">
+							<span>🏆 RANK 稱號</span>
+							<span class="bold">${rank}</span>
+						</div>
+						<div class="summary-row">
+							<span>📍 FLOOR 層數</span>
+							<span class="bold">${this.state.stage}</span>
+						</div>
+						<div class="summary-row">
+							<span>⚔️ KILLS 擊殺</span>
+							<span class="bold">${this.state.killCount}</span>
+						</div>
+						<div class="summary-row">
+							<span>💥 MAX DMG 最高傷</span>
+							<span class="bold">${this.state.maxDmg}</span>
+						</div>
+						<div class="summary-row">
+							<span>⏱️ TIME 存活</span>
+							<span class="bold">${timeStr}</span>
+						</div>
+						
+						<div class="divider"></div>
+						
+						<div class="relic-section">
+							<div style="font-size:12px; margin-bottom:5px;">🎒 RELICS 遺物 (${this.state.relics.length})</div>
+							<div class="relic-grid">${relicHtml}</div>
+						</div>
+
+						<div class="divider"></div>
+						
+						<div class="quote">"${this.getRandomQuote(win)}"</div>
+					</div>
+				`;
+
+                modal.classList.remove('hidden');
+            },
+
+            // [新增] 隨機結束語
+            getRandomQuote: function (win) {
+                const quotes = win
+                    ? ["傳說將會永遠流傳。", "你是電，你是光，你是唯一的推土機。", "迷宮被你征服了。"]
+                    : ["勝敗乃兵家常事，大俠請重新來過。", "你的裝備被怪物撿去穿了。", "下次記得多帶點補藥。", "至少你努力過了...對吧？"];
+                return quotes[Math.floor(Math.random() * quotes.length)];
+            },
+
+            showRewards: function (isElite) {
+                this.showScene('scene-reward'); this.state.rewardPicks = isElite ? 2 : 1;
+                document.getElementById('reward-subtitle').innerText = isElite ? T('PICK_ELITE') : T('PICK_NORMAL');
+                const div = document.getElementById('reward-list'); div.innerHTML = ''; let pool = [...C_RELICS]; Utils.shuffle(pool);
+                pool.slice(0, 3).forEach(relic => {
+                    const el = document.createElement('div'); el.className = 'wanted-poster'; el.style.padding = '10px';
+                    // [翻譯] 道具名稱與描述
+                    el.innerHTML = `<div style="font-size:24px">${relic.icon}</div><div style="font-weight:bold; margin:5px 0;">${T(relic.name)}</div><div style="font-size:12px;">${T(relic.desc)}</div>`;
+                    el.onclick = () => this.pickReward(relic, el); div.appendChild(el);
+                });
+            },
+            pickReward: function (relic, el) {
+                if (this.state.rewardPicks <= 0 || el.style.background === 'black') return;
+                this.state.relics.push(relic);
+                el.style.background = 'black';
+                el.style.color = 'white';
+                this.state.rewardPicks--;
+
+                if (this.state.rewardPicks <= 0) {
+                    setTimeout(() => {
+                        // [關鍵修正] 檢查是否為劇情模式
+                        if (USE_STORY_MODE) {
+                            this.nextStoryStep();
+                        } else {
+                            this.state.stage++;
+                            this.genMap();
+                        }
+                    }, 500);
+                }
+            },
+            renderRelicBar: function (id) { const bar = document.getElementById(id); if (!bar) return; bar.innerHTML = ""; this.state.relics.forEach(r => { const icon = document.createElement('div'); icon.className = 'relic-icon'; icon.innerText = r.icon; icon.onclick = () => Game.toggleRelicGuide(); bar.appendChild(icon); }); },
+            renderBuffs: function () { const bar = document.getElementById('p-buffs'); if (!bar) return; bar.innerHTML = ""; BuffSys.activeBuffs.forEach(b => { const el = document.createElement('span'); el.className = 'tag warn'; el.innerText = `${b.name}(${b.duration})`; bar.appendChild(el); }); },
+            toggleColor: function () { document.body.classList.toggle('bw-mode'); },
+            toggleRules: function () { document.getElementById('modal-rules').classList.toggle('hidden'); },
+            toggleGuide: function () {
+                const modal = document.getElementById('modal-guide');
+                if (modal.classList.contains('hidden')) {
+                    document.getElementById('guide-title').innerText = T('TITLE_HANDS');
+                    document.getElementById('guide-close-btn').innerText = T('BTN_CLOSE');
+
+                    const list = document.getElementById('guide-content');
+                    list.innerHTML = '';
+
+                    // 建立格線容器
+                    const container = document.createElement('div');
+                    container.className = 'guide-container';
+
+                    const order = [
+                        'Five of a Kind', 'Straight Flush', 'Four of a Kind',
+                        'Full House', 'Flush', 'Straight',
+                        'Three of a Kind', 'Two Pair', 'Pair'
+                    ];
+
+                    order.forEach(key => {
+                        const score = Data.HAND_SCORES[key];
+                        const name = T(HAND_KEY_MAP[key]);
+                        const example = HAND_EXAMPLES[key];
+
+                        const row = document.createElement('div');
+                        row.className = 'guide-row';
+
+                        // 左側文字資訊：牌型與倍率
+                        const info = document.createElement('div');
+                        info.className = 'guide-info';
+                        info.innerHTML = `<b>${name}</b><br><small>${score[0]} x ${score[1]}</small>`;
+
+                        // 右側卡片圖示
+                        const cardsArea = document.createElement('div');
+                        cardsArea.className = 'guide-cards';
+
+                        example.forEach(c => {
+                            const meta = Data.SUIT_META[c.s];
+                            const cardEl = document.createElement('div');
+                            cardEl.className = `m-card ${meta.style === 'suit-red' ? 'red' : 'black'}`;
+                            // 判斷是否為鬼牌
+                            if (c.r === 'JO') {
+                                cardEl.innerHTML = `<span>🃏</span>`;
+                            } else {
+                                cardEl.innerHTML = `<span class="m-card-rank">${c.r}</span><span>${meta.sym}</span>`;
+                            }
+                            cardsArea.appendChild(cardEl);
+                        });
+
+                        row.appendChild(info);
+                        row.appendChild(cardsArea);
+                        container.appendChild(row);
+                    });
+
+                    list.appendChild(container);
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            },
+            toggleRelicGuide: function () { const modal = document.getElementById('modal-relics'); if (modal.classList.contains('hidden')) { const list = document.getElementById('relic-list-content'); list.innerHTML = ""; if (this.state.relics.length === 0) { list.innerHTML = "<div style='text-align:center; color:#999;'>No relics yet.</div>"; } else { this.state.relics.forEach(r => { const item = document.createElement('div'); item.style.marginBottom = "8px"; item.style.borderBottom = "1px dashed #ccc"; item.style.paddingBottom = "4px"; item.innerHTML = `<span style="font-size:18px">${r.icon}</span> <b>${T(r.name)}</b><br><span style="color:#555;">${T(r.desc)}</span>`; list.appendChild(item); }); } modal.classList.remove('hidden'); } else { modal.classList.add('hidden'); } },
+            msg: function (t) {
+                // 1. 更新主畫面的即時訊息
+                document.getElementById('msg-box').innerText = t;
+
+                // 2. 記錄到歷史日誌中
+                const speaker = this.state.turn === 'player' ? 'YOU' : 'ENM';
+                this.state.logs.push({ turn: this.state.turnCount, speaker: speaker, text: t });
+            },
+
+            // [新增] 切換與渲染日誌彈跳視窗
+            toggleLog: function () {
+                const modal = document.getElementById('modal-log');
+                if (modal.classList.contains('hidden')) {
+                    const content = document.getElementById('log-content');
+                    content.innerHTML = '';
+
+                    if (this.state.logs.length === 0) {
+                        content.innerHTML = '<div style="text-align:center; color:#999;">No records yet.</div>';
+                    } else {
+                        // 反向迴圈，讓最新的訊息顯示在最上方，減少玩家滑動 E-ink 的次數
+                        for (let i = this.state.logs.length - 1; i >= 0; i--) {
+                            const log = this.state.logs[i];
+                            const el = document.createElement('div');
+                            el.className = 'log-entry';
+                            // 使用 Unicode 區分敵我回合
+                            const icon = log.speaker === 'YOU' ? '👤' : '👾';
+                            el.innerHTML = `<span class="log-turn">T${log.turn}</span> ${icon} ${log.text}`;
+                            content.appendChild(el);
+                        }
+                    }
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            }
+        };
+        /* =========================================================================
+           PART 2: USER CONFIG (EDIT HERE)
+           🛠️ 請在這裡修改所有遊戲內容：道具、事件、怪物、圖案。
+           ========================================================================= */
+
+        // [新增] 牌型範例定義
+        const HAND_EXAMPLES = {
+            'Five of a Kind': [{ s: 's', r: 'A' }, { s: 'h', r: 'A' }, { s: 'd', r: 'A' }, { s: 'c', r: 'A' }, { s: 'j', r: 'JO' }],
+            'Straight Flush': [{ s: 'h', r: '10' }, { s: 'h', r: 'J' }, { s: 'h', r: 'Q' }, { s: 'h', r: 'K' }, { s: 'h', r: 'A' }],
+            'Four of a Kind': [{ s: 's', r: 'K' }, { s: 'h', r: 'K' }, { s: 'd', r: 'K' }, { s: 'c', r: 'K' }, { s: 'h', r: '2' }],
+            'Full House': [{ s: 's', r: 'Q' }, { s: 'h', r: 'Q' }, { s: 'd', r: 'Q' }, { s: 's', r: 'J' }, { s: 'h', r: 'J' }],
+            'Flush': [{ s: 's', r: '2' }, { s: 's', r: '4' }, { s: 's', r: '6' }, { s: 's', r: '8' }, { s: 's', r: 'K' }],
+            'Straight': [{ s: 's', r: '5' }, { s: 'h', r: '6' }, { s: 'd', r: '7' }, { s: 'c', r: '8' }, { s: 'h', r: '9' }],
+            'Three of a Kind': [{ s: 's', r: '10' }, { s: 'h', r: '10' }, { s: 'd', r: '10' }, { s: 'c', r: '2' }, { s: 'h', r: '5' }],
+            'Two Pair': [{ s: 's', r: '9' }, { s: 'h', r: '9' }, { s: 'd', r: '8' }, { s: 'c', r: '8' }, { s: 'h', r: '3' }],
+            'Pair': [{ s: 's', r: '7' }, { s: 'h', r: '7' }, { s: 'd', r: '5' }, { s: 'c', r: '2' }, { s: 'h', r: '4' }],
+            'High Card': [{ s: 's', r: 'A' }, { s: 'h', r: '5' }, { s: 'd', r: '8' }, { s: 'c', r: 'J' }, { s: 'h', r: '2' }]
+        };
+
+        // [1] 視覺與 ASCII 圖案
+        C_VISUALS = {
+            Kaomoji: {
+                Player: ["(｡⊙ᗝ⊚｡)", "(｡◕◡◕｡)", "(｡◕ᆺ◕｡)", "(｡◕⌓◕｡)"], // [Dead, Healthy, Hurt, Critical]
+            },
+            CoverArt:
+                `
+@%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%@@@@%%%%%%%@%%%%##%%%%%%%%##%%######%
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%%%%%%%@@@%##%%%@@%%%#%
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*##%@@@@@%@@@@%%#%@@@##
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%%%@@@#*++=+=+**#%%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@+@#%%@%@@@@@%%@@@@%%%@%%
+@@@@@@@@@@@@@@@@@@@@@@@@@%%*+===--.   -+=:    :--+*#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@**%%%@@@@@#*@@%%%@@@%%%#
+@@@@@@@@@@@@@@@@@@@@@@@*=:              .    .-+=+++*#@@@@@@@@@@@@@@@@@@@@@@@@@@#%#**##%@@#@@*@@@@@%@@%##
+@@@@@@@@@@@@@@@@@@@@@@+.                        .:  .:+%@@@@@@@@@@@@@@@@@@@@@@@@-%@%*+==*#=*@+*++****#%%*
+@@@@@@@@@@@@@@@@@@@@@+     :     .  -                   *%@@@@@@@@@@@@@@@@@#*+*###%@#*#***-+@%@%***##%%#*
+@@@@@@@@@@@@@@@@@@@@*.   .*   +@@@@@@@%#%**#=   #= .     .@@@@@@@@@@@@@@@@#+#@@@@-@#@@%###+@@#@@@#***#%%*
+@@@@@@@@@@@@@@@@@@@@::--=#.  -%@@@@@@@@%@@@@@@= -#**-      %@@@@@@@@@@@@@@@%#@@@@*@@@@%%##%@@%@@@@@%##%%*
+@%@@@@@@@@@@@@@@@@%#==*@%:   =@@%%@%@@%#@@@@@@  .##***-: :  #@@@@@@@@@@@@@@%%@@@%@@@@@@%###@@@@*@@@@%#%@*
+@%@@@@@@@@@@@@@@@@@***%#:   .+@@@+@@@%@%@@@@@@   ***#%##+*:  #@@@@@@@@@@@@@@##@%@@@@@@@@%%#@@@@*@@@@@@%%*
+@@@@@@@@@@@@@@@@@@%*%#*+    +*@@%%@@#@%#@@@#*@+  - =*##*##%#+.%@@@@@@@@@@@@@@%#@@@@@@@@@@%@@%@%@@@@@@@@@*
+@%@@@@@@@@@@@@@@@@#%#+.    .+@%= =@% -**@@@@%@@    -+*#####%%++%@@@@@@@@@@@@@@#@@@@@@@@@@@@+#@@@@@@@@@@@*
+@%@@@@@@@@@@@@@@@@*==:           :@%.    :+#%@@      +****###+=%@@@@@@@@@@@@@@%@@@@@@@@@%@%*%@@@@@@@@@@@*
+@%@@@@@@@@@@@@@@@#:        +=+-.=+-@@#+=*..=-:       -=: -+*+  #%@@@@@@@@@@@@@#@@@@@@@@@##%#@@@@@@@@@@@@*
+@%@@@@@@@@@@@@@@@*         :%%#%#=@@@**+#@#*=-+%           =   =%@@@@@@@@@@@@@+@@@@@@@@@@**%@@@@@@@@@@@@*
+@%@@@@@@@@@@@@@@%=        -=%@%@*@@@@@@*%@%%@@*.             . .#@@@@@@@@@@@@@-%@@@@@@@@@@@@@@@@@@@@@@@@*
+@#@@@@@@@@@@@@@@#-        *%@@@*@@@@@@@%@@@@*+@%:               +@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@@%%+
+@#@@@@@@@@@@@@@%%:       +@@@@##@@@@@@@@@@@@@*@+.               -@@@@@@@@@@@@@@:%@@@@@@@@@@@@@@@@@@%##%%*
+@#@@@@@@@@@@@@@%#        @@@@%*=:==:.%@@@@@@@@@=-               =%@@@@@@@@@@@@@@+@@@@@@@@@@@@@@@@#*%%%%@+
+@*@@@@@@@@@@@%@@*        #@@@@@@#%@@#**%@@@@@@+*=               +#@@@@@@@@@@@@@@-%@@@@@@@@@@@@@+*@%#%%@@+
+@*@@@@@@@@@@@=%@=       :@@@@%=-+#***%%@%+*@@@@*=               -%@@@@@@@@@@@@@@@ @@@@@@@@@@@-*%%%%%%@@@*
+@*@@@@@@@@@@@@#*.       #@@@@%#=    -%*.+@@@@@@*:               -%@@@@@@@@@@@@@@@@ @@@@@@@@=#%%#@@%#%%%%*
+@*@@@@@@@@@@@@*=        %@@@#. :=*#%@#-.-#@@@%@%                -%@@@@@@@@@@@@@@@@@.%@@@@=*%#@%%@%**#@%@+
+@*@@@@@@@@@@@@==.       -@%+==*@@@@@@#*::*@@@%@*                -*@@@@@@@@@@@@@@@@@@:@@*=*@@%*+-*@%%@@%@#
+@*@@@@@@@@@@%@+=         +#++*##%%%-++**#@@@@#@#                -#@@@@@@@@@@@@@@@@@@@=**##=-%@@@@@@@@@@@#
+@*@@@@@@@@@@@#*- .        @#*@@@@@@@+***#*#@@%+ #                =%@@@@@@@@@@@@@@@@@@**=#%@%@%@@@@@@@@@@#
+@*@@@@@@@@@@@*#  :.:       *%@@@@@@#@%+@@#%@%** =               .+%@@@@@@@@@@@@@@@@#%%%%@@@@@@@@@@@@@@@@*
+@*@@@@@@@@@@%%#    --       =#@@@@@@@@+#%+.-.  :*                **@@@@@@@@@@@@@+#%%@%@%@@@@@@@@@@@@@@@@*
+@*@@@@@@@@@@*%+             . =**+#%=.   :=*%@ #    **  -=       :*@@@@@@@@@@@#+#%%@@@@@@@@@@@@@@@@@@@@@*
+@*@@@@@@@@@@*%=             :..        :=##@@.**    #*:  =+--    -=#@@@@@@@@%+*%@@@@@@@@@@@@@@*@@@@@@@#@*
+@*@@@@@@@@@@*%+--           .:::. ..:-:+%@@@=:@     .. -  *-:-=-  -*@@@@@@*+%@@@@@@@@@@@@@@@%@@*@@@@@@#@*
+@*@@@@@@@@@@%%%::-          .*=-==+=+*==%@@-:@:   .             . :*@@@@+#@@@@@@@@@@@@@@@@%%@@@@@%%%#@@%*
+@*@@@@@@@@@@@%%%+:.          =#*+=**#%++#%=.#+  . -      .      :.:%@*-@@@@@@@@@@@@@@@%#%@@@@@@@@@@@@@@@*
+@*@@@@@@@@@@@@%@@*+ :-.:     -@@@%%@@@*+*+-+**@  :.             -==-=@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+@#@@@@@@@@@@@@@@@@@@-+:       #@@@@@@@#@%*#@@@@ # +.      -    #%=*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+@#@@@@@@@@@@@@@@+.            =@@@@@@@%@@#@@@@%+@+        ==:++=*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%@@@@@@@*
+@#@@@@@@@#                    =@@@*%@@@@##@@@@#.          ++#+*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*@@@@@@@*
+@#@@@%%+                      =%@@@@@@@**@@%.            -*#*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@+@@@@@@@#
+@#@@@#.                   .  -+#@@@@@%#*+.               #=@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@=%@@@@@@#
+@#@@*                  .:   :#%@@@@@@%+                 -%@@@@@@@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@+%@@@@@@#
+@#@#                  -- . -#@@@**%%@@%.               -%@@@@@@@@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@#@@@@@@@#
+@#@:                -=-. =*:*@@@@@@@%%-              .*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@#@@@@@@@#
+@##               .==. .-%@#%@@@@@@*                 *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%@@@@@@@*
+@*=               .==.:.@@@@@@@@@@@#                +@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%@@@@@@@@@@%@@@@@@@#
+@*.                --..@@@@@@@@@@@%=.              +%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%@@@@@@@@@#@@@@@@@#
+@*                 ::.%@@@@@@@#++#**+             **#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#%@@@@@@*
+@*                 ..*@@@@@@@#+=+##++            :=%%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*%@@@@@@*
+@+                  =@@**@@@%*=+*@@@#            -@@@@@@@@@@@@@@@%@@@@@@@@@@@@@@@@@@@%@@@@@@@@@@*%@@@@@@*
+@-                 :#@@@@@@@@#*#*@@@%           *@@@@@@@@@@@@@@@@#%@@@@@@@@@@@@@@@@@%%@@@@@@@@@@*%@@@@@@*
+@                 .*@@@@@@@@@@%##@@**-         =+@@@@@@@@@@@@@@@@*%@@@@@@@@@@@@@@@@@@%@@@@@@@@@@#%@@@@@@*
+@                 =%@@@@@@%@@@@@@@@@@=         :@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%@@@@@@@*
+@                 +@@@@@@-*@@@@@@@@@@*        :@@@@@@@@@@@@@@@@@%%@@@@@@@@@@@@@@@@@%%@@@@@@@@@@@%%@@@@@@*
+@                -#@@@@@+=*%@@@@@@@@@#       :@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@*
+@+--------------=*%%%%%%**####%%%%%%%#------=##%%%%%%%%%%%%%%%%%#%%%%%####%###############%%%%###########`
+        };
+
+        // [2] 道具清單 (Relics) - 雙語化
+        // 注意：name 和 desc 改成了 {en:..., zh:...} 物件
+        C_RELICS = [
+            { id: 'r_chip', name: { en: 'Stone', zh: '能量石' }, icon: '♦', desc: { en: '+20 Chips', zh: '+20 籌碼' }, effect: { chip: 20 } },
+            { id: 'r_mult', name: { en: 'Joker', zh: '鬼牌' }, icon: '★', desc: { en: '+4 Mult', zh: '+4 倍率' }, effect: { mult: 4 } },
+            { id: 'r_disc', name: { en: 'Dice', zh: '骰子' }, icon: '↺', desc: { en: '+1 Discard', zh: '+1 棄牌數' }, effect: { disc: 1 } },
+            { id: 'r_hp', name: { en: 'Ankh', zh: '十字架' }, icon: '♥', desc: { en: '+30 HP', zh: '+30 生命' }, effect: { hp: 30 } },
+            { id: 'r_amulet', name: { en: 'Gem', zh: '寶石' }, icon: '◎', desc: { en: '+10 Chips', zh: '+10 籌碼' }, effect: { chip: 10 } },
+            { id: 'r_hook', name: { en: 'Hook', zh: '毒勾' }, icon: 'ψ', desc: { en: 'Discard Dmg', zh: '棄牌造成傷害' }, effect: { special: 'hook' } },
+            { id: 'r_helm', name: { en: 'Helm', zh: '頭盔' }, icon: '🛡', desc: { en: '-10 Def', zh: '-10 受傷減免' }, effect: { flat_def: 10 } },
+            { id: 'r_band', name: { en: 'Band', zh: '繃帶' }, icon: '✚', desc: { en: 'Regen 5', zh: '每回合回血 5' }, effect: { regen: 5 } },
+            { id: 'r_gene', name: { en: 'Gene', zh: '基因' }, icon: '§', desc: { en: 'No Pair Dmg', zh: '免疫「一對」傷害' }, effect: { immune_pair: true } },
+            { id: 'r_boot', name: { en: 'Boot', zh: '飛靴' }, icon: '»', desc: { en: '10% Dodge', zh: '10% 閃避率' }, effect: { dodge: 0.1 } },
+            { id: 'r_umb', name: { en: 'Umb', zh: '黑傘' }, icon: '☂', desc: { en: 'No Field', zh: '無視場地效果' }, effect: { ignore_field: true } },
+            { id: 'r_dice', name: { en: 'L.Dice', zh: '運氣骰' }, icon: '?', desc: { en: '+/- 15% Dmg', zh: '傷害浮動 +/-15%' }, effect: { random_dmg: 0.15 } },
+            { id: 'r_lock', name: { en: 'Lock', zh: '大鎖' }, icon: '✖', desc: { en: 'Enemy Pick-1', zh: '敵人撿牌數 -1' }, effect: { special: 'lock' } }
+        ];
+
+        // [3] 怪物名稱 (Monster Names) - 雙語化
+        C_MONSTER_NAMES = {
+            Adj: [
+                { en: 'Mad', zh: '瘋狂' }, { en: 'Dark', zh: '黑暗' }, { en: 'Tiny', zh: '迷你' }, { en: 'Big', zh: '巨大' },
+                { en: 'Sad', zh: '悲傷' }, { en: 'Evil', zh: '邪惡' }, { en: 'Old', zh: '古老' }, { en: 'Wild', zh: '野生' },
+                { en: 'Ice', zh: '寒冰' }, { en: 'Fire', zh: '烈火' }, { en: 'Void', zh: '虛空' }, { en: 'Iron', zh: '鋼鐵' }
+            ],
+            Noun: [
+                { en: 'Slime', zh: '史萊姆' }, { en: 'Bat', zh: '蝙蝠' }, { en: 'Rat', zh: '巨鼠' }, { en: 'Wolf', zh: '惡狼' },
+                { en: 'Orc', zh: '半獸人' }, { en: 'Imp', zh: '小惡魔' }, { en: 'Mage', zh: '法師' }, { en: 'Ghost', zh: '幽靈' },
+                { en: 'Cube', zh: '方塊' }, { en: 'Drake', zh: '幼龍' }
+            ]
+        };
+
+        // [新增] 怪物詞綴定義：影響 HP, ATK, CD
+        const C_MONSTER_PREFIX = [
+            { en: 'Fierce', zh: '兇猛的', mod: { hp: 0.8, atk: 1.5, cd: 0 } },
+            { en: 'Giant', zh: '巨型的', mod: { hp: 1.5, atk: 0.8, cd: 1 } },
+            { en: 'Swift', zh: '迅捷的', mod: { hp: 0.7, atk: 0.9, cd: -1 } },
+            { en: 'Elite', zh: '菁英的', mod: { hp: 1.3, atk: 1.3, cd: 0 } },
+            { en: 'Cursed', zh: '詛咒的', mod: { hp: 1.2, atk: 1.2, cd: 0 } }
+        ];
+
+        C_MONSTER_PARTS = {
+            Brackets: [['(', ')'], ['[', ']'], ['{', '}'], ['<', '>'], ['ᶘ', 'ᶅ'], ['༼', '༽'], ['⦅', '⦆'], ['ʕ', 'ʔ'], ['|', '|'], ['᚜', '᚛'], ['꧁', '꧂'], ['☾', '☽'], ['«', '»'], ['【', '】'], ['《', '》']],
+            Eye: ['•', 'o', 'T', 'x', 'ಠ', '◉', '^', '¬', '☼', '*', '+', '-', 'q', 'p', '●', '◕', '=', '>', '♥', '×', 'Φ', '⊙', '@', '0', 'Θ', '°', '?', '$'],
+            Mouth: ['_', '.', 'ω', '盆', '口', 'A', 'O', '▽', 'Д', 'x', '3', '~', 'ε', '皿', '∀', '_', '^', 'v', '□', '▂', 'ᴥ', '～', 'ー', '◊', '△', 'o']
+        };
+
+        // [4] 怪物技能 (Skills) - 雙語化
+        C_SKILLS = [
+            { type: 'ban_suit', desc: { en: 'BAN', zh: '禁色' } },
+            { type: 'no_disc', desc: { en: 'LOCK', zh: '鎖棄' } },
+            { type: 'weak', desc: { en: 'WEAK', zh: '虛弱' } }
+        ];
+
+        // [5] 隨機事件列表 (Events) - 雙語化
+        C_EVENTS = [
+            {
+                id: 'e_thief', name: { en: 'Shady Guy', zh: '可疑男子' }, kao: '( ¬ _ ¬ )',
+                text: { en: '"Hey you! Give me your stuff or I\'ll punch you!"', zh: '「喂！把東西交出來，不然賞你一拳！」' },
+                choices: [
+                    { text: { en: 'Fight him', zh: '揍他' }, type: 'hp', val: -20, res: { en: 'You fought him off... but took a beating.', zh: '你趕走了他... 但被打得鼻青臉腫。' } },
+                    { text: { en: 'Give Item', zh: '給道具' }, type: 'lose_relic', res: { en: 'You handed over a shiny item to stay safe.', zh: '你交出了一個發光的道具以求保命。' } }
+                ]
+            },
+            {
+                id: 'e_shrine', name: { en: 'Old Shrine', zh: '古老神龕' }, kao: '⛩️',
+                text: { en: 'You find a dusty shrine. Offer some blood?', zh: '你發現一座佈滿灰塵的神龕。要獻祭鮮血嗎？' },
+                choices: [
+                    { text: { en: 'Pray', zh: '祈禱' }, type: 'hp_buff', val: -10, res: { en: 'You sacrificed blood... and feel blessed!', zh: '你獻出了鮮血... 感覺受到了祝福！' } },
+                    { text: { en: 'Leave', zh: '離開' }, type: 'leave', res: { en: 'You walked away. Nothing happened.', zh: '你轉身離開，什麼事也沒發生。' } }
+                ]
+            },
+            {
+                id: 'e_doc', name: { en: 'Plague Doc', zh: '瘟疫醫生' }, kao: '( ⚆ ᴥ ⚆ )',
+                text: { en: '"I can fix you," says the strange doctor holding a saw.', zh: '「我能治好你，」拿著鋸子的怪醫說道。' },
+                choices: [
+                    { text: { en: 'Get Treatment', zh: '接受治療' }, type: 'heal', val: 30, res: { en: 'Refreshing! You feel much better.', zh: '神清氣爽！你感覺好多了。' } },
+                    { text: { en: 'Surgery', zh: '動手術' }, type: 'relic_pain', val: -15, res: { en: 'It hurts like hell! But he implanted a Relic...', zh: '痛死人了！但他在你體內植入了一個道具...' } }
+                ]
+            },
+            {
+                id: 'e_chest', name: { en: 'Mimic?', zh: '寶箱怪?' }, kao: '[ ? ? ? ]',
+                text: { en: 'It looks like a chest. Is it breathing?', zh: '看起來是個寶箱。它在呼吸嗎？' },
+                choices: [
+                    { text: { en: 'Open it', zh: '打開它' }, type: 'gamble', res: '' },
+                    { text: { en: 'Walk away', zh: '走開' }, type: 'leave', res: { en: 'Better safe than sorry.', zh: '安全第一。' } }
+                ]
+            },
+            {
+                id: 'e_talk_dragon',
+                name: { en: 'Tiny Dragon', zh: '烈火幼龍' },
+                kao: 'ʕ¬o?ʔ',
+                dialogue: [
+                    { speaker: 'npc', text: { en: "Grrr...", zh: "咕嚕... (盯著你看)" } },
+                    { speaker: 'player', text: { en: "Are you hungry?", zh: "你肚子餓了嗎？" } },
+                    { speaker: 'npc', text: { en: "GRAAA!! (Spits fire)", zh: "嘎！！ (噴了一小口火)" } },
+                    { speaker: 'player', text: { en: "Whoa! Watch it!", zh: "哇！小心點！" } }
+                ],
+                choices: [
+                    { text: { en: 'Feed Relic', zh: '餵它吃道具' }, type: 'lose_relic', res: { en: 'It ate your relic and flew away happily.', zh: '它吃掉了你的道具，開心地飛走了。' } },
+                    { text: { en: 'Pet it', zh: '摸摸頭' }, type: 'hp', val: -10, res: { en: 'Ouch! It bit you!', zh: '哎唷！它咬了你的手！' } }
+                ]
+            }
+        ];
+
+        // [6] 營地設定 (Campfire) - 雙語化
+        C_CAMPFIRE = {
+            name: { en: 'Campfire', zh: '營地' }, kao: '🔥',
+            text: { en: 'A warm fire crackles. You can rest here.', zh: '溫暖的火堆劈啪作響。你可以在此休息。' },
+            choices: [
+                { text: { en: 'Sleep', zh: '睡覺' }, type: 'camp_rest', res: { en: 'You slept soundly and recovered strength.', zh: '你睡得很香，恢復了體力。' } },
+                { text: { en: 'Train', zh: '鍛鍊' }, type: 'camp_train', res: { en: 'You practiced moves. Base DMG +10!', zh: '你鍛鍊了招式。基礎傷害 +10！' } }
+            ]
+        };
+
+        // [7] 固定關卡 (Levels) - 雙語化
+        C_LEVELS = {
+            1: {
+                name: { en: "Tutorial 1", zh: "初試啼聲" },
+                enemy: { name: { en: "Cute Pet", zh: "可愛小動物" }, kao: "ฅ^•ﻌ•^ฅ", hp: 10, atk: 1, cd: 9, ai: 'Random' },
+                tableMax: 4, fixedCards: [{ s: 's', r: 'A' }, { s: 'h', r: 'A' }, { s: 'd', r: 'A' }, { s: 'c', r: 'A' }],
+                hint: { en: "(っ◕‿◕)っ Select cards then click ATTACK", zh: "(っ◕‿◕)っ 請先選牌，然後按攻擊" }, drop: null
+            },
+            2: {
+                name: { en: "Tutorial 2", zh: "認識牌型" },
+                enemy: { name: { en: "Bad Pet", zh: "不可愛動物" }, kao: "ฅ^✧ܫ✧^ฅ", hp: 10, atk: 1, cd: 9, ai: 'Random' },
+                tableMax: 5, fixedCards: [{ s: 's', r: '10' }, { s: 's', r: 'J' }, { s: 's', r: 'Q' }, { s: 's', r: 'K' }, { s: 's', r: 'A' }],
+                hint: { en: "(っ◕‿◕)っ Pick 5 cards for bigger damage!", zh: "(っ◕‿◕)っ 選滿5張同花順可造成更高傷害" }, drop: null
+            },
+            3: {
+                name: { en: "Tutorial 3", zh: "牛刀小試" },
+                enemy: { name: { en: "Evil Pet", zh: "邪惡小動物" }, kao: "ฅ^*w*^ฅ", hp: 100, atk: 1, cd: 2, ai: 'Random' },
+                tableMax: 8, fixedCards: null,
+                hint: { en: "(っ◕‿◕)っ Try to win a real battle!", zh: "(っ◕‿◕)っ 請嘗試贏得一場比賽吧！" }, drop: 'random'
+            }
+        };
+
+        /* =========================================
+           [8] 劇情流程編輯器 (Story Flow Editor)
+           ========================================= */
+
+        // 是否啟用劇情模式？(若為 false 則維持原本的隨機地圖)
+        const USE_STORY_MODE = true;
+
+        // 定義你的劇情關卡順序
+        const C_STORY_FLOW = [
+            {
+                type: 'event',
+                id: 'e_thief'
+            },
+            {
+                type: 'event',
+                id: 'e_talk_dragon'
+            },
+            {
+                type: 'battle',
+                // 指定這場戰鬥的敵人數值
+                enemy: {
+                    name: { en: "Palace Guard", zh: "皇宮守衛" },
+                    kao: "🛡️(ò_ó)⚔️",
+                    hp: 300, maxHp: 300, atk: 25, cd: 3,
+                    ai: 'High'
+                },
+                // 設定獎勵類型：'random' (隨機三選一) 或 'fixed' (指定道具)
+                rewardType: 'fixed',
+                fixedRewardId: 'r_mult' // 戰勝後固定獲得「鬼牌」
+            },
+            {
+                type: 'campfire' // 戰鬥完進入營地休息
+            },
+            {
+                type: 'battle',
+                enemy: {
+                    name: { en: "Boss", zh: "魔王" },
+                    kao: "👹(╬◣д◢)🔥", // [補上] 顏文字頭像
+                    hp: 1000,
+                    maxHp: 1000,       // [補上] 最大血量
+                    atk: 50,
+                    cd: 2,
+                    maxCd: 2,          // [補上] 最大冷卻
+                    ai: 'Max',
+                    skill: []
+                },
+                rewardType: 'random'
+            }
+        ];
+        /* =========================================================================
+           END OF CONFIG - SYSTEM START
+           ========================================================================= */
+        Game.init();
+    </script>
+
+
+</body></html>

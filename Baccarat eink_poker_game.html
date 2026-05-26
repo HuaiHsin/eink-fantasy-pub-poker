@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Baccarat - E-ink Edition</title>
+    <style>
+        /* === 基礎設定 === */
+        :root {
+            --bg: #ffffff;
+            --ink: #000000;
+            --paper: #ffffff;
+            --zone-bg: #f4f4f4;
+            --border: 3px solid var(--ink);
+            --shadow: 4px 4px 0px rgba(0, 0, 0, 0.2);
+            --red-suit: #cc0000;
+            --banker-color: #e74c3c;
+            --player-color: #3498db;
+            --tie-color: #2ecc71;
+        }
+
+        body.bw-mode {
+            --bg: #ffffff;
+            --ink: #000000;
+            --paper: #ffffff;
+            --zone-bg: #e8e8e8;
+            --shadow: 4px 4px 0px #000000;
+            --red-suit: #000000;
+            --banker-color: #000000;
+            --player-color: #000000;
+            --tie-color: #000000;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: "Courier New", monospace;
+            background: var(--bg);
+            color: var(--ink);
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .bold {
+            font-weight: 900;
+        }
+
+        /* === 按鈕 === */
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            padding: 10px;
+            background: var(--zone-bg);
+            border-top: 2px solid #ccc;
+            min-height: 68px;
+        }
+
+        button.game-btn {
+            flex: 1;
+            padding: 16px;
+            font-family: inherit;
+            font-size: 18px;
+            font-weight: 900;
+            background: white;
+            border: 3px solid black;
+            border-radius: 6px;
+            box-shadow: 0 4px 0 black;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: transform 0.1s;
+        }
+
+        button.game-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 black;
+        }
+
+        button.game-btn:disabled {
+            opacity: 0.4;
+            border-style: dashed;
+            pointer-events: none;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .blink-cursor::after {
+            content: " █";
+            animation: blink 1s step-end infinite;
+        }
+
+        /* === 開始畫面 === */
+        #scene-start {
+            padding: 20px;
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .title-box {
+            border: 6px double black;
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+        }
+
+        /* === 遊戲畫面 === */
+        #scene-game {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #ddd;
+            height: 100vh;
+        }
+
+        .zone-info {
+            background: var(--zone-bg);
+            padding: 10px 15px;
+            border-bottom: 2px solid #999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .zone-table {
+            flex: 1;
+            background: #2d5016;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        body.bw-mode .zone-table {
+            background: #fff;
+            background-image: radial-gradient(#ccc 1px, transparent 1px);
+        }
+
+        .table-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-players {
+            width: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #000;
+            border-radius: 8px;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        body.bw-mode .ai-players {
+            background: #f0f0f0;
+        }
+
+        .ai-player {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid black;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .ai-player .name {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .ai-player .bet {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .ai-player.betting {
+            background: #ffffcc;
+            border-color: #f39c12;
+        }
+
+        /* === 手牌區域 === */
+        .hand-section {
+            margin: 10px 0;
+            min-height: 140px;
+        }
+
+        .hand-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid black;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-weight: 900;
+        }
+
+        .hand-label.banker {
+            border-color: var(--banker-color);
+        }
+
+        .hand-label.player {
+            border-color: var(--player-color);
+        }
+
+        .hand-area {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            min-height: 110px;
+        }
+
+        .card {
+            width: 70px;
+            height: 100px;
+            border: 2px solid black;
+            border-radius: 4px;
+            background: white;
+            position: relative;
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card.back {
+            background: repeating-linear-gradient(45deg, #666, #666 10px, #999 10px, #999 20px);
+        }
+
+        .suit-red {
+            color: var(--red-suit);
+            font-weight: 900;
+        }
+
+        .suit-black {
+            color: var(--ink);
+        }
+
+        .rank-txt {
+            font-size: 18px;
+            font-weight: 900;
+            position: absolute;
+            top: 4px;
+            left: 6px;
+        }
+
+        .rank-bot {
+            font-size: 18px;
+            font-weight: 900;
+            position: absolute;
+            bottom: 4px;
+            right: 6px;
+            transform: rotate(180deg);
+        }
+
+        .suit-big {
+            font-size: 36px;
+        }
+
+        /* === 下注區域 === */
+        .betting-area {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .bet-spot {
+            flex: 1;
+            border: 3px solid black;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .bet-spot:active {
+            transform: scale(0.95);
+        }
+
+        .bet-spot.banker {
+            border-color: var(--banker-color);
+        }
+
+        .bet-spot.player {
+            border-color: var(--player-color);
+        }
+
+        .bet-spot.tie {
+            border-color: var(--tie-color);
+        }
+
+        .bet-spot.selected {
+            background: #ffffcc;
+            box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.5);
+        }
+
+        .bet-spot .label {
+            font-size: 16px;
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+
+        .bet-spot .amount {
+            font-size: 24px;
+            font-weight: 900;
+            color: #f39c12;
+        }
+
+        .bet-spot .payout {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* === 訊息框 === */
+        #msg-box {
+            background: black;
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            min-height: 32px;
+            margin-bottom: 10px;
+        }
+
+        /* === 狀態顯示 === */
+        .status-pill {
+            border: 2px solid black;
+            background: white;
+            padding: 6px 12px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+
+        /* === 籌碼選擇 === */
+        .chip-selector {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .chip {
+            width: 50px;
+            height: 50px;
+            border: 3px solid black;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            cursor: pointer;
+            background: white;
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+        }
+
+        .chip:active {
+            transform: scale(0.9);
+        }
+
+        .chip.selected {
+            box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.8);
+        }
+
+        /* === Modal === */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-box {
+            background: white;
+            border: 4px double black;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.2);
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .stats-table td {
+            padding: 8px;
+            border-bottom: 1px dashed #ccc;
+            text-align: left;
+        }
+
+        .stats-table td:last-child {
+            text-align: right;
+            font-weight: bold;
+        }
+
+        /* === 結果動畫 === */
+        .result-animation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 6px double black;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 12px 12px 0px rgba(0, 0, 0, 0.3);
+            z-index: 50;
+            min-width: 350px;
+        }
+
+        .result-title {
+            font-size: 32px;
+            font-weight: 900;
+            margin-bottom: 20px;
+        }
+
+        .result-scores {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .result-score {
+            text-align: center;
+        }
+
+        .result-score .label {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .result-score .value {
+            font-size: 48px;
+            font-weight: 900;
+        }
+
+        .result-score.winner .value {
+            color: #2ecc71;
+        }
+
+        .result-score.loser .value {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 開始畫面 -->
+    <div id="scene-start">
+        <div class="title-box">
+            <h1 style="font-size: 32px; margin-bottom: 5px;">🎰 BACCARAT 百家樂 🎰</h1>
+            <p style="font-size: 14px;">E-ink Edition / 電子紙版本</p>
+        </div>
+        <div style="margin: 30px 0; font-size: 48px;">🂡 🂱 🃁 🃑</div>
+        <button class="game-btn blink-cursor" onclick="Game.startGame()" style="width: 80%; margin: 10px auto;">START
+            GAME 開始遊戲</button>
+        <button class="game-btn" onclick="Game.toggleRules()" style="width: 80%; margin: 10px auto;">📜 RULES
+            規則說明</button>
+        <button class="game-btn" onclick="Game.toggleStats()" style="width: 80%; margin: 10px auto;">📊 STATS
+            統計數據</button>
+        <button class="game-btn" onclick="Game.toggleColor()" style="width: 80%; margin: 10px auto;">🎨 COLOR /
+            B&W</button>
+    </div>
+
+    <!-- 遊戲畫面 -->
+    <div id="scene-game" class="hidden">
+        <!-- 資訊欄 -->
+        <div class="zone-info">
+            <div class="status-pill">💰 Chips: <span id="chips">1000</span></div>
+            <div class="status-pill">🎯 Bet: <span id="current-bet">0</span></div>
+            <div class="status-pill">🏆 Wins: <span id="wins">0</span></div>
+        </div>
+
+        <!-- 牌桌區 -->
+        <div class="zone-table">
+            <!-- 主遊戲區 -->
+            <div class="table-main">
+                <div id="msg-box">Place your bet! 請下注！</div>
+
+                <!-- 莊家手牌 -->
+                <div class="hand-section">
+                    <div class="hand-label banker">
+                        <span>🎩 BANKER 莊家</span>
+                        <span id="banker-score">Score: -</span>
+                    </div>
+                    <div class="hand-area" id="banker-hand"></div>
+                </div>
+
+                <!-- 下注區域 -->
+                <div class="betting-area">
+                    <div class="bet-spot banker" onclick="Game.selectBetType('banker')">
+                        <div class="label">BANKER 莊</div>
+                        <div class="amount" id="bet-banker">0</div>
+                        <div class="payout">Pays 0.95:1</div>
+                    </div>
+                    <div class="bet-spot tie" onclick="Game.selectBetType('tie')">
+                        <div class="label">TIE 和</div>
+                        <div class="amount" id="bet-tie">0</div>
+                        <div class="payout">Pays 8:1</div>
+                    </div>
+                    <div class="bet-spot player" onclick="Game.selectBetType('player')">
+                        <div class="label">PLAYER 閒</div>
+                        <div class="amount" id="bet-player">0</div>
+                        <div class="payout">Pays 1:1</div>
+                    </div>
+                </div>
+
+                <!-- 玩家手牌 -->
+                <div class="hand-section">
+                    <div class="hand-label player">
+                        <span>👤 PLAYER 閒家</span>
+                        <span id="player-score">Score: -</span>
+                    </div>
+                    <div class="hand-area" id="player-hand"></div>
+                </div>
+
+                <!-- 籌碼選擇 -->
+                <div class="chip-selector">
+                    <div class="chip" onclick="Game.selectChip(10)">10</div>
+                    <div class="chip" onclick="Game.selectChip(50)">50</div>
+                    <div class="chip" onclick="Game.selectChip(100)">100</div>
+                    <div class="chip selected" onclick="Game.selectChip(500)">500</div>
+                </div>
+            </div>
+
+            <!-- AI 玩家側邊欄 -->
+            <div class="ai-players">
+                <div style="color: white; font-weight: bold; margin-bottom: 10px; text-align: center;">OTHER PLAYERS
+                </div>
+                <div id="ai-players-list"></div>
+            </div>
+        </div>
+
+        <!-- 按鈕區 -->
+        <div class="btn-group" id="bet-buttons">
+            <button class="game-btn" onclick="Game.clearBets()">CLEAR 清除</button>
+            <button class="game-btn blink-cursor" onclick="Game.confirmBets()" style="background: #90EE90;">DEAL
+                發牌</button>
+        </div>
+
+        <div class="btn-group hidden" id="result-buttons">
+            <button class="game-btn blink-cursor" onclick="Game.newRound()">NEXT ROUND 下一局</button>
+            <button class="game-btn" onclick="Game.backToMenu()">MENU 主選單</button>
+        </div>
+    </div>
+
+    <!-- 規則說明 Modal -->
+    <div id="modal-rules" class="modal hidden">
+        <div class="modal-box">
+            <h3 style="border-bottom: 2px solid black; margin-bottom: 10px;">BACCARAT RULES 遊戲規則</h3>
+            <div style="text-align: left; font-size: 13px; line-height: 1.8; max-height: 400px; overflow-y: auto;">
+                <p><b>目標 (Goal)</b><br>
+                    預測莊家或閒家哪一方的點數更接近 9 點。</p>
+                <br>
+                <p><b>牌值 (Card Values)</b><br>
+                    • A: 1 點<br>
+                    • 2-9: 牌面點數<br>
+                    • 10, J, Q, K: 0 點<br>
+                    • 總點數只看個位數（例如 15 = 5 點）</p>
+                <br>
+                <p><b>下注選項 (Betting)</b><br>
+                    • BANKER 莊家: 賠率 0.95:1（抽5%佣金）<br>
+                    • PLAYER 閒家: 賠率 1:1<br>
+                    • TIE 和局: 賠率 8:1</p>
+                <br>
+                <p><b>遊戲流程 (Gameplay)</b><br>
+                    1. 下注在莊、閒或和<br>
+                    2. 發牌：莊家和閒家各發 2 張牌<br>
+                    3. 根據點數決定是否補第三張牌<br>
+                    4. 比較點數，接近 9 點者獲勝</p>
+                <br>
+                <p><b>補牌規則 (Third Card)</b><br>
+                    • 任一方 8 或 9 點（天牌）：不補牌<br>
+                    • 閒家 0-5 點：補牌<br>
+                    • 閒家 6-7 點：不補牌<br>
+                    • 莊家補牌規則較複雜，由系統自動處理</p>
+            </div>
+            <button class="game-btn" onclick="Game.toggleRules()" style="margin-top: 15px;">CLOSE 關閉</button>
+        </div>
+    </div>
+
+    <!-- 統計數據 Modal -->
+    <div id="modal-stats" class="modal hidden">
+        <div class="modal-box">
+            <h3 style="border-bottom: 2px solid black; margin-bottom: 10px;">STATISTICS 統計數據</h3>
+            <table class="stats-table">
+                <tr>
+                    <td>🏆 Banker Wins 莊贏</td>
+                    <td id="stat-banker-wins">0</td>
+                </tr>
+                <tr>
+                    <td>👤 Player Wins 閒贏</td>
+                    <td id="stat-player-wins">0</td>
+                </tr>
+                <tr>
+                    <td>🤝 Ties 和局</td>
+                    <td id="stat-ties">0</td>
+                </tr>
+                <tr>
+                    <td>💰 Total Wagered 總下注</td>
+                    <td id="stat-wagered">0</td>
+                </tr>
+                <tr>
+                    <td>📈 Net Profit 淨利潤</td>
+                    <td id="stat-profit">0</td>
+                </tr>
+                <tr>
+                    <td>🎯 Win Rate 勝率</td>
+                    <td id="stat-winrate">0%</td>
+                </tr>
+            </table>
+            <button class="game-btn" onclick="Game.resetStats()" style="margin-top: 10px; background: #ffe0e0;">RESET
+                重置</button>
+            <button class="game-btn" onclick="Game.toggleStats()" style="margin-top: 10px;">CLOSE 關閉</button>
+        </div>
+    </div>
+
+    <!-- 結果動畫容器 -->
+    <div id="result-container"></div>
+
+    <script>
+        /* =========================================================================
+           BACCARAT GAME ENGINE
+           ========================================================================= */
+
+        const SUITS = ['♠', '♥', '♦', '♣'];
+        const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+        // AI 玩家名字和個性
+        const AI_PLAYERS = [
+            { name: { en: 'Mr. Chen', zh: '陳先生' }, kao: '(￣▽￣)', preference: 'banker' },
+            { name: { en: 'Ms. Wang', zh: '王小姐' }, kao: '(◕‿◕)', preference: 'player' },
+            { name: { en: 'Dr. Li', zh: '李博士' }, kao: '(•̀ᴗ•́)', preference: 'banker' },
+            { name: { en: 'Lady Lin', zh: '林夫人' }, kao: '(｡♥‿♥｡)', preference: 'tie' },
+            { name: { en: 'Boss Zhang', zh: '張老闆' }, kao: '(ಠ_ಠ)', preference: 'banker' },
+            { name: { en: 'Lucky Liu', zh: '劉幸運' }, kao: '(^_^)b', preference: 'player' }
+        ];
+
+        const Utils = {
+            shuffle: arr => arr.sort(() => Math.random() - 0.5),
+            delay: ms => new Promise(res => setTimeout(res, ms)),
+            randInt: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
+            pick: arr => arr[Math.floor(Math.random() * arr.length)]
+        };
+
+        const Game = {
+            state: {
+                deck: [],
+                bankerHand: [],
+                playerHand: [],
+                chips: 1000,
+                bets: { banker: 0, player: 0, tie: 0 },
+                selectedChip: 500,
+                selectedBetType: null,
+                gamePhase: 'betting', // betting, dealing, result
+                aiPlayers: [],
+                stats: {
+                    bankerWins: 0,
+                    playerWins: 0,
+                    ties: 0,
+                    totalWagered: 0,
+                    netProfit: 0
+                }
+            },
+
+            init: function () {
+                this.loadStats();
+                this.updateStatsDisplay();
+                this.initAIPlayers();
+                this.showScene('scene-start');
+            },
+
+            initAIPlayers: function () {
+                this.state.aiPlayers = AI_PLAYERS.map(ai => ({
+                    ...ai,
+                    chips: Utils.randInt(500, 2000),
+                    currentBet: { banker: 0, player: 0, tie: 0 }
+                }));
+            },
+
+            startGame: function () {
+                this.showScene('scene-game');
+                this.newRound();
+            },
+
+            backToMenu: function () {
+                this.showScene('scene-start');
+            },
+
+            createDeck: function () {
+                let deck = [];
+                // 使用 6 副牌
+                for (let i = 0; i < 6; i++) {
+                    for (let suit of SUITS) {
+                        for (let rank of RANKS) {
+                            deck.push({ suit, rank });
+                        }
+                    }
+                }
+                return Utils.shuffle(deck);
+            },
+
+            getCardValue: function (card) {
+                if (card.rank === 'A') return 1;
+                if (['J', 'Q', 'K', '10'].includes(card.rank)) return 0;
+                return parseInt(card.rank);
+            },
+
+            calculateScore: function (hand) {
+                let total = hand.reduce((sum, card) => sum + this.getCardValue(card), 0);
+                return total % 10; // 只取個位數
+            },
+
+            selectChip: function (amount) {
+                this.state.selectedChip = amount;
+                document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('selected'));
+                event.target.classList.add('selected');
+            },
+
+            selectBetType: function (type) {
+                if (this.state.gamePhase !== 'betting') return;
+
+                const amount = this.state.selectedChip;
+                if (this.state.chips < amount) {
+                    this.msg("💸 Not enough chips! 籌碼不足！");
+                    return;
+                }
+
+                this.state.bets[type] += amount;
+                this.state.chips -= amount;
+                this.updateUI();
+                this.msg(`Bet ${amount} on ${type.toUpperCase()}! 下注 ${amount} 在${type === 'banker' ? '莊' : type === 'player' ? '閒' : '和'}！`);
+            },
+
+            clearBets: function () {
+                if (this.state.gamePhase !== 'betting') return;
+
+                // 退還籌碼
+                this.state.chips += this.state.bets.banker + this.state.bets.player + this.state.bets.tie;
+                this.state.bets = { banker: 0, player: 0, tie: 0 };
+                this.updateUI();
+                this.msg("Bets cleared! 已清除下注！");
+            },
+
+            confirmBets: async function () {
+                if (this.state.gamePhase !== 'betting') return;
+
+                const totalBet = this.state.bets.banker + this.state.bets.player + this.state.bets.tie;
+                if (totalBet === 0) {
+                    this.msg("⚠️ Please place a bet! 請先下注！");
+                    return;
+                }
+
+                this.state.gamePhase = 'dealing';
+                this.showButtons('none');
+
+                // AI 玩家下注
+                await this.aiPlayersBet();
+
+                // 發牌
+                await this.dealCards();
+            },
+
+            aiPlayersBet: async function () {
+                this.msg("Other players betting... 其他玩家下注中...");
+
+                for (let ai of this.state.aiPlayers) {
+                    // 重置 AI 下注
+                    ai.currentBet = { banker: 0, player: 0, tie: 0 };
+
+                    // 根據偏好和隨機性下注
+                    const betAmount = Utils.randInt(50, 500);
+                    if (ai.chips >= betAmount) {
+                        const rand = Math.random();
+                        if (ai.preference === 'banker' && rand < 0.7) {
+                            ai.currentBet.banker = betAmount;
+                        } else if (ai.preference === 'player' && rand < 0.7) {
+                            ai.currentBet.player = betAmount;
+                        } else if (ai.preference === 'tie' && rand < 0.3) {
+                            ai.currentBet.tie = betAmount;
+                        } else {
+                            // 隨機下注
+                            const choice = Utils.pick(['banker', 'player']);
+                            ai.currentBet[choice] = betAmount;
+                        }
+                        ai.chips -= betAmount;
+                    }
+
+                    this.renderAIPlayers();
+                    await Utils.delay(200);
+                }
+
+                await Utils.delay(500);
+            },
+
+            dealCards: async function () {
+                this.state.deck = this.createDeck();
+                this.state.bankerHand = [];
+                this.state.playerHand = [];
+
+                this.msg("Dealing cards... 發牌中...");
+
+                // 發初始 4 張牌
+                this.state.playerHand.push(this.state.deck.pop());
+                this.updateUI();
+                await Utils.delay(400);
+
+                this.state.bankerHand.push(this.state.deck.pop());
+                this.updateUI();
+                await Utils.delay(400);
+
+                this.state.playerHand.push(this.state.deck.pop());
+                this.updateUI();
+                await Utils.delay(400);
+
+                this.state.bankerHand.push(this.state.deck.pop());
+                this.updateUI();
+                await Utils.delay(800);
+
+                // 檢查是否需要補第三張牌
+                await this.handleThirdCard();
+            },
+
+            handleThirdCard: async function () {
+                let playerScore = this.calculateScore(this.state.playerHand);
+                let bankerScore = this.calculateScore(this.state.bankerHand);
+
+                // 天牌（8 或 9）不補牌
+                if (playerScore >= 8 || bankerScore >= 8) {
+                    await this.showResult();
+                    return;
+                }
+
+                let playerThirdCard = null;
+
+                // 閒家補牌規則
+                if (playerScore <= 5) {
+                    this.msg("Player draws third card... 閒家補牌...");
+                    await Utils.delay(800);
+                    playerThirdCard = this.state.deck.pop();
+                    this.state.playerHand.push(playerThirdCard);
+                    this.updateUI();
+                    await Utils.delay(800);
+                    playerScore = this.calculateScore(this.state.playerHand);
+                }
+
+                // 莊家補牌規則（複雜）
+                const shouldBankerDraw = this.shouldBankerDrawThirdCard(bankerScore, playerThirdCard);
+                if (shouldBankerDraw) {
+                    this.msg("Banker draws third card... 莊家補牌...");
+                    await Utils.delay(800);
+                    this.state.bankerHand.push(this.state.deck.pop());
+                    this.updateUI();
+                    await Utils.delay(800);
+                }
+
+                await this.showResult();
+            },
+
+            shouldBankerDrawThirdCard: function (bankerScore, playerThirdCard) {
+                if (bankerScore >= 7) return false;
+                if (playerThirdCard === null) {
+                    return bankerScore <= 5;
+                }
+
+                const thirdValue = this.getCardValue(playerThirdCard);
+
+                if (bankerScore <= 2) return true;
+                if (bankerScore === 3) return thirdValue !== 8;
+                if (bankerScore === 4) return thirdValue >= 2 && thirdValue <= 7;
+                if (bankerScore === 5) return thirdValue >= 4 && thirdValue <= 7;
+                if (bankerScore === 6) return thirdValue === 6 || thirdValue === 7;
+
+                return false;
+            },
+
+            showResult: async function () {
+                const playerScore = this.calculateScore(this.state.playerHand);
+                const bankerScore = this.calculateScore(this.state.bankerHand);
+
+                let result = '';
+                if (bankerScore > playerScore) {
+                    result = 'banker';
+                } else if (playerScore > bankerScore) {
+                    result = 'player';
+                } else {
+                    result = 'tie';
+                }
+
+                // 顯示結果動畫
+                await this.displayResultAnimation(result, playerScore, bankerScore);
+
+                // 結算
+                this.settleRound(result);
+            },
+
+            displayResultAnimation: async function (result, playerScore, bankerScore) {
+                const container = document.getElementById('result-container');
+                const animation = document.createElement('div');
+                animation.className = 'result-animation';
+
+                let title = '';
+                if (result === 'banker') title = '🎩 BANKER WINS! 莊贏！';
+                else if (result === 'player') title = '👤 PLAYER WINS! 閒贏！';
+                else title = '🤝 TIE! 和局！';
+
+                animation.innerHTML = `
+                    <div class="result-title">${title}</div>
+                    <div class="result-scores">
+                        <div class="result-score ${result === 'player' ? 'winner' : result === 'banker' ? 'loser' : ''}">
+                            <div class="label">👤 PLAYER</div>
+                            <div class="value">${playerScore}</div>
+                        </div>
+                        <div style="font-size: 32px; align-self: center;">VS</div>
+                        <div class="result-score ${result === 'banker' ? 'winner' : result === 'player' ? 'loser' : ''}">
+                            <div class="label">🎩 BANKER</div>
+                            <div class="value">${bankerScore}</div>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(animation);
+                await Utils.delay(2500);
+                container.innerHTML = '';
+            },
+
+            settleRound: function (result) {
+                this.state.gamePhase = 'result';
+
+                let winAmount = 0;
+                let message = '';
+
+                if (result === 'banker') {
+                    winAmount = Math.floor(this.state.bets.banker * 1.95); // 0.95:1 賠率
+                    this.state.stats.bankerWins++;
+                    message = '🎩 Banker wins! 莊贏！';
+                } else if (result === 'player') {
+                    winAmount = this.state.bets.player * 2; // 1:1 賠率
+                    this.state.stats.playerWins++;
+                    message = '👤 Player wins! 閒贏！';
+                } else {
+                    winAmount = this.state.bets.tie * 9; // 8:1 賠率
+                    // 和局時莊閒注退回
+                    winAmount += this.state.bets.banker + this.state.bets.player;
+                    this.state.stats.ties++;
+                    message = '🤝 Tie! 和局！';
+                }
+
+                const totalBet = this.state.bets.banker + this.state.bets.player + this.state.bets.tie;
+                this.state.stats.totalWagered += totalBet;
+                this.state.stats.netProfit += (winAmount - totalBet);
+
+                this.state.chips += winAmount;
+
+                // AI 玩家結算
+                this.settleAIPlayers(result);
+
+                this.msg(message + ` You won ${winAmount} chips! 你贏得 ${winAmount} 籌碼！`);
+                this.saveStats();
+                this.updateUI();
+                this.showButtons('result');
+            },
+
+            settleAIPlayers: function (result) {
+                for (let ai of this.state.aiPlayers) {
+                    let aiWin = 0;
+                    if (result === 'banker') {
+                        aiWin = Math.floor(ai.currentBet.banker * 1.95);
+                    } else if (result === 'player') {
+                        aiWin = ai.currentBet.player * 2;
+                    } else {
+                        aiWin = ai.currentBet.tie * 9 + ai.currentBet.banker + ai.currentBet.player;
+                    }
+                    ai.chips += aiWin;
+                }
+                this.renderAIPlayers();
+            },
+
+            newRound: function () {
+                if (this.state.chips < 10) {
+                    this.msg("💸 Game Over! No chips left! 遊戲結束！沒有籌碼了！");
+                    this.state.chips = 1000;
+                }
+
+                this.state.bets = { banker: 0, player: 0, tie: 0 };
+                this.state.bankerHand = [];
+                this.state.playerHand = [];
+                this.state.gamePhase = 'betting';
+
+                this.msg("Place your bet! 請下注！");
+                this.updateUI();
+                this.showButtons('bet');
+            },
+
+            renderCard: function (card) {
+                const div = document.createElement('div');
+                div.className = 'card';
+
+                const isRed = ['♥', '♦'].includes(card.suit);
+                const colorClass = isRed ? 'suit-red' : 'suit-black';
+
+                div.innerHTML = `
+                    <div class="rank-txt ${colorClass}">${card.rank}</div>
+                    <div class="suit-big ${colorClass}">${card.suit}</div>
+                    <div class="rank-bot ${colorClass}">${card.rank}</div>
+                `;
+
+                return div;
+            },
+
+            updateUI: function () {
+                // 更新籌碼
+                document.getElementById('chips').innerText = this.state.chips;
+                const totalBet = this.state.bets.banker + this.state.bets.player + this.state.bets.tie;
+                document.getElementById('current-bet').innerText = totalBet;
+                document.getElementById('wins').innerText = this.state.stats.bankerWins + this.state.stats.playerWins;
+
+                // 更新下注金額顯示
+                document.getElementById('bet-banker').innerText = this.state.bets.banker;
+                document.getElementById('bet-player').innerText = this.state.bets.player;
+                document.getElementById('bet-tie').innerText = this.state.bets.tie;
+
+                // 更新手牌
+                const bankerContainer = document.getElementById('banker-hand');
+                bankerContainer.innerHTML = '';
+                this.state.bankerHand.forEach(card => {
+                    bankerContainer.appendChild(this.renderCard(card));
+                });
+
+                const playerContainer = document.getElementById('player-hand');
+                playerContainer.innerHTML = '';
+                this.state.playerHand.forEach(card => {
+                    playerContainer.appendChild(this.renderCard(card));
+                });
+
+                // 更新分數
+                if (this.state.bankerHand.length > 0) {
+                    const bankerScore = this.calculateScore(this.state.bankerHand);
+                    document.getElementById('banker-score').innerText = `Score: ${bankerScore}`;
+                } else {
+                    document.getElementById('banker-score').innerText = 'Score: -';
+                }
+
+                if (this.state.playerHand.length > 0) {
+                    const playerScore = this.calculateScore(this.state.playerHand);
+                    document.getElementById('player-score').innerText = `Score: ${playerScore}`;
+                } else {
+                    document.getElementById('player-score').innerText = 'Score: -';
+                }
+
+                this.renderAIPlayers();
+            },
+
+            renderAIPlayers: function () {
+                const container = document.getElementById('ai-players-list');
+                container.innerHTML = '';
+
+                this.state.aiPlayers.forEach(ai => {
+                    const div = document.createElement('div');
+                    div.className = 'ai-player';
+
+                    const totalBet = ai.currentBet.banker + ai.currentBet.player + ai.currentBet.tie;
+                    if (totalBet > 0) {
+                        div.classList.add('betting');
+                    }
+
+                    let betInfo = '';
+                    if (ai.currentBet.banker > 0) betInfo += `莊:${ai.currentBet.banker} `;
+                    if (ai.currentBet.player > 0) betInfo += `閒:${ai.currentBet.player} `;
+                    if (ai.currentBet.tie > 0) betInfo += `和:${ai.currentBet.tie}`;
+
+                    div.innerHTML = `
+                        <div class="name">${ai.kao} ${ai.name.zh}</div>
+                        <div class="bet">💰 ${ai.chips}</div>
+                        ${betInfo ? `<div class="bet" style="color: #f39c12;">🎯 ${betInfo}</div>` : ''}
+                    `;
+
+                    container.appendChild(div);
+                });
+            },
+
+            showButtons: function (type) {
+                document.getElementById('bet-buttons').classList.add('hidden');
+                document.getElementById('result-buttons').classList.add('hidden');
+
+                if (type === 'bet') {
+                    document.getElementById('bet-buttons').classList.remove('hidden');
+                } else if (type === 'result') {
+                    document.getElementById('result-buttons').classList.remove('hidden');
+                }
+            },
+
+            msg: function (text) {
+                document.getElementById('msg-box').innerText = text;
+            },
+
+            showScene: function (id) {
+                document.querySelectorAll('body > div[id^="scene-"]').forEach(e => e.classList.add('hidden'));
+                document.getElementById(id).classList.remove('hidden');
+            },
+
+            toggleColor: function () {
+                document.body.classList.toggle('bw-mode');
+            },
+
+            toggleRules: function () {
+                document.getElementById('modal-rules').classList.toggle('hidden');
+            },
+
+            toggleStats: function () {
+                this.updateStatsDisplay();
+                document.getElementById('modal-stats').classList.toggle('hidden');
+            },
+
+            updateStatsDisplay: function () {
+                const s = this.state.stats;
+                document.getElementById('stat-banker-wins').innerText = s.bankerWins;
+                document.getElementById('stat-player-wins').innerText = s.playerWins;
+                document.getElementById('stat-ties').innerText = s.ties;
+                document.getElementById('stat-wagered').innerText = s.totalWagered;
+                document.getElementById('stat-profit').innerText = s.netProfit >= 0 ? `+${s.netProfit}` : s.netProfit;
+
+                const totalGames = s.bankerWins + s.playerWins;
+                const winRate = totalGames > 0 ? (((s.bankerWins + s.playerWins) / (totalGames + s.ties)) * 100).toFixed(1) : 0;
+                document.getElementById('stat-winrate').innerText = `${winRate}%`;
+            },
+
+            saveStats: function () {
+                localStorage.setItem('baccarat_stats', JSON.stringify(this.state.stats));
+            },
+
+            loadStats: function () {
+                const saved = localStorage.getItem('baccarat_stats');
+                if (saved) {
+                    this.state.stats = JSON.parse(saved);
+                }
+            },
+
+            resetStats: function () {
+                if (confirm('Reset all statistics? 重置所有統計數據？')) {
+                    this.state.stats = {
+                        bankerWins: 0,
+                        playerWins: 0,
+                        ties: 0,
+                        totalWagered: 0,
+                        netProfit: 0
+                    };
+                    this.saveStats();
+                    this.updateStatsDisplay();
+                }
+            }
+        };
+
+        // 初始化遊戲
+        Game.init();
+    </script>
+</body>
+
+</html>

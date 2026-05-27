@@ -829,6 +829,21 @@
             flex: 1;
         }
 
+        /* 混合模式：當同時有純文字敘述與對話框時，縮減敘述框以釋放高度 */
+        #scene-event.has-chat {
+            padding: 12px;
+        }
+        #scene-event.has-chat .event-image {
+            font-size: 40px;
+            margin: 8px 0;
+        }
+        #scene-event.has-chat .event-text {
+            flex: none;
+            margin-bottom: 10px;
+            padding: 12px 15px;
+            font-size: 14px;
+        }
+
         .event-btn-group {
             display: flex;
             flex-direction: column;
@@ -2905,6 +2920,7 @@
 
                 document.getElementById('event-title').innerText = actualEvt.id ? T('EVENT') : T('CAMPFIRE');
 
+                const sceneEventEl = document.getElementById('scene-event');
                 const imgEl = document.getElementById('event-kao');
                 const descEl = document.getElementById('event-desc');
                 const chatBox = document.getElementById('event-chat-box');
@@ -2914,6 +2930,7 @@
 
                 // 判斷是「對話模式」還是「普通模式」
                 if (evtData.dialogue) {
+                    sceneEventEl.classList.add('has-chat');
                     // === 對話模式 ===
                     chatBox.classList.remove('hidden'); // 顯示對話框
                     chatBox.innerHTML = ''; // 清空舊對話
@@ -2957,6 +2974,7 @@
                     });
 
                 } else {
+                    sceneEventEl.classList.remove('has-chat');
                     // === 普通模式 (舊有邏輯) ===
                     imgEl.classList.remove('hidden');
                     descEl.classList.remove('hidden');

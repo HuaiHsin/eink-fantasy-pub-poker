@@ -2070,13 +2070,17 @@
             <div class="card-area" id="card-container"></div>
         </div>
         <div class="zone-player">
-            <div class="hud-row" style="align-items: center; gap: 10px; margin-bottom: 8px;">
+            <div class="hud-row" style="align-items: center; gap: 10px; margin-bottom: 6px; justify-content: flex-start;">
                 <div class="kao" id="p-kao"></div>
-                <!-- 玩家資訊列區塊 -->
-                <div class="player-info-bar" style="flex: 1; display: flex; align-items: center; border: 2px solid black; background: white; padding: 4px 10px; gap: 10px; height: 36px; box-sizing: border-box; box-shadow: 2px 2px 0px #ccc;">
-                    <div style="font-size: 15px; font-weight: bold; white-space: nowrap; border-right: 2px solid black; padding-right: 10px; display: flex; align-items: center; height: 100%;">💰 <span id="battle-gold" style="margin-left: 3px;">0</span>G</div>
-                    <div class="relic-bar" id="battle-relics" style="flex: 1; display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-start; margin: 0; min-height: auto; overflow: hidden; align-items: center;"></div>
+                <!-- 金幣資訊列 -->
+                <div class="player-gold-bar" style="border: 2px solid black; background: white; padding: 4px 10px; display: flex; align-items: center; height: 32px; box-sizing: border-box; box-shadow: 2px 2px 0px #ccc;">
+                    <span style="font-size: 15px; font-weight: bold; display: flex; align-items: center;">💰 <span id="battle-gold" style="margin-left: 3px;">0</span>G</span>
                 </div>
+            </div>
+            <!-- 遺物道具列區塊（單獨佔用整行，空間極其充裕） -->
+            <div class="player-relics-bar" style="border: 2px solid black; background: white; padding: 4px 8px; margin-bottom: 6px; box-shadow: 2px 2px 0px #ccc; display: flex; align-items: center; min-height: 32px; box-sizing: border-box; gap: 8px;">
+                <div style="font-size: 12px; font-weight: bold; border-right: 2px solid black; padding-right: 8px; white-space: nowrap; height: 100%; display: flex; align-items: center;" id="battle-relics-label">🎒 道具</div>
+                <div class="relic-bar" id="battle-relics" style="flex: 1; display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-start; margin: 0; min-height: auto;"></div>
             </div>
             <div class="tag-row" id="p-buffs" style="justify-content: flex-start; min-height: 24px;"></div>
             <div class="tag-row" id="p-auras" style="justify-content: flex-start; min-height: 24px; margin-bottom: 4px;"></div>
@@ -3803,6 +3807,12 @@
                 if (mapGoldEl) mapGoldEl.innerText = this.state.gold;
                 const battleGoldEl = document.getElementById('battle-gold');
                 if (battleGoldEl) battleGoldEl.innerText = this.state.gold;
+
+                // [翻譯] 遺物道具列標籤
+                const relicsLabel = document.getElementById('battle-relics-label');
+                if (relicsLabel) {
+                    relicsLabel.innerText = USER_LANG === 'zh' ? '🎒 道具' : '🎒 ITEMS';
+                }
 
                 // [新增] 渲染光環
                 const aurasBar = document.getElementById('p-auras');

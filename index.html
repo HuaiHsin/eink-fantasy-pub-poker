@@ -2107,10 +2107,41 @@
     </div>
 
     <div id="scene-reward" class="hidden">
-        <div style="padding: 20px; text-align: center;">
-            <h1 style="font-size: 32px; margin-bottom: 10px;">VICTORY</h1>
-            <p id="reward-subtitle" style="margin-bottom: 20px;">Choose your loot</p>
-            <div id="reward-list"></div>
+        <div style="padding: 15px; text-align: center; display: flex; flex-direction: column; min-height: 100vh; box-sizing: border-box; justify-content: flex-start; align-items: center; background: #fffaf0;">
+            <h1 style="font-size: 28px; margin: 10px 0 5px 0; font-weight: 900;" id="reward-title">VICTORY</h1>
+            
+            <!-- 戰鬥結算報告卡片 -->
+            <div id="battle-report-card" style="border: 3px solid black; background: white; padding: 12px 15px; margin: 5px auto 10px auto; width: 100%; max-width: 320px; box-shadow: 4px 4px 0px #ccc; text-align: left; box-sizing: border-box;">
+                <div style="font-size: 14px; font-weight: bold; border-bottom: 2px solid black; padding-bottom: 4px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <span id="report-title-text">📊 戰鬥結算報告</span>
+                    <span id="report-rating-stars" style="color: black; font-size: 12px;">★★★★★</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span id="report-label-gold">💰 獲得金幣:</span>
+                        <span style="font-weight: bold;" id="report-gold">+30G</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;" id="report-hand-bonus-row">
+                        <span id="report-label-bonus">🎴 牌型加成:</span>
+                        <span style="font-weight: bold;" id="report-hand-bonus">+2G (一對)</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span id="report-label-dmg">⚔️ 總傷害:</span>
+                        <span style="font-weight: bold;" id="report-dmg">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span id="report-label-avg">⚡ 平均每回傷害:</span>
+                        <span style="font-weight: bold;" id="report-avg-dmg">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span id="report-label-turns">⏳ 戰鬥回合數:</span>
+                        <span style="font-weight: bold;" id="report-turns">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <p id="reward-subtitle" style="margin: 5px 0 10px 0; font-weight: bold; font-size: 15px;">Choose your loot</p>
+            <div id="reward-list" style="width: 100%; max-width: 480px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;"></div>
         </div>
     </div>
 
@@ -4194,6 +4225,39 @@
             showRewards: function (isElite) {
                 this.showScene('scene-reward'); this.state.rewardPicks = isElite ? 2 : 1;
                 document.getElementById('reward-subtitle').innerText = isElite ? T('PICK_ELITE') : T('PICK_NORMAL');
+                
+                // 動態填充戰鬥報告卡片 (Fill battle report card dynamically)
+                const stats = this.state.battleStats;
+                const avgDmg = stats.turnsPlayed > 0 ? Math.floor(stats.totalDamage / stats.turnsPlayed) : 0;
+                const rating = this.calculateRating(stats, avgDmg);
+                
+                document.getElementById('report-rating-stars').innerText = rating.stars;
+                
+                // 翻譯標籤 (Bilingual labels)
+                document.getElementById('report-title-text').innerText = USER_LANG === 'zh' ? '📊 戰鬥結算報告' : '📊 BATTLE REPORT';
+                document.getElementById('report-label-gold').innerText = USER_LANG === 'zh' ? '💰 獲得金幣:' : '💰 Gold Earned:';
+                document.getElementById('report-label-bonus').innerText = USER_LANG === 'zh' ? '🎴 牌型加成:' : '🎴 Hand Bonus:';
+                document.getElementById('report-label-dmg').innerText = USER_LANG === 'zh' ? '⚔️ 總傷害:' : '⚔️ Total Damage:';
+                document.getElementById('report-label-avg').innerText = USER_LANG === 'zh' ? '⚡ 平均每回傷害:' : '⚡ Avg DMG/Turn:';
+                document.getElementById('report-label-turns').innerText = USER_LANG === 'zh' ? '⏳ 戰鬥回合數:' : '⏳ Turns Played:';
+                
+                // 計算扣除牌型加成後的基礎金幣
+                const baseGoldEarned = stats.goldEarned - stats.maxBonus;
+                document.getElementById('report-gold').innerText = `+${baseGoldEarned}G`;
+                
+                const bonusRow = document.getElementById('report-hand-bonus-row');
+                if (stats.maxBonus > 0 && stats.highestHand) {
+                    bonusRow.style.display = 'flex';
+                    document.getElementById('report-hand-bonus').innerText = `+${stats.maxBonus}G (${T(HAND_KEY_MAP[stats.highestHand] || stats.highestHand)})`;
+                } else {
+                    bonusRow.style.display = 'none';
+                }
+                
+                document.getElementById('report-dmg').innerText = stats.totalDamage;
+                document.getElementById('report-avg-dmg').innerText = avgDmg;
+                document.getElementById('report-turns').innerText = stats.turnsPlayed;
+
+                // 生成獎勵選項列表
                 const div = document.getElementById('reward-list'); div.innerHTML = ''; let pool = [...C_RELICS]; Utils.shuffle(pool);
                 pool.slice(0, 3).forEach(relic => {
                     const el = document.createElement('div'); el.className = 'wanted-poster'; el.style.padding = '10px';
@@ -4641,26 +4705,16 @@
             // [新增] 顯示戰鬥報告（勝利後）
             showBattleReport: function () {
                 const stats = this.state.battleStats;
-                const avgDmg = stats.turnsPlayed > 0 ? Math.floor(stats.totalDamage / stats.turnsPlayed) : 0;
-                const rating = this.calculateRating(stats, avgDmg);
-
                 const msgBox = document.getElementById('msg-box');
                 msgBox.style.background = 'black';
                 msgBox.style.color = 'white';
                 msgBox.style.fontSize = '14px';
-                msgBox.style.padding = '10px';
+                msgBox.style.fontWeight = 'bold';
+                msgBox.style.textAlign = 'center';
+                msgBox.style.padding = '6px';
                 msgBox.style.minHeight = 'auto';
-                msgBox.style.lineHeight = '1.5';
-
-                let handBonusMsg = (stats.maxBonus > 0 && stats.highestHand) 
-                    ? ` (+${stats.maxBonus}G ${T(HAND_KEY_MAP[stats.highestHand] || stats.highestHand)})` 
-                    : '';
-
-                msgBox.innerHTML = `
-                    <div style="font-weight: 900; font-size: 18px; margin-bottom: 2px; text-align: center;">🎉 ${T('VICTORY')} 🎉</div>
-                    <div style="font-size: 13px; text-align: center; margin-bottom: 2px;">💰 +${stats.goldEarned}G${handBonusMsg}</div>
-                    <div style="font-size: 12px; text-align: center; opacity: 0.9;">⚔️${stats.totalDamage} | ⚡${avgDmg} | ⏳${stats.turnsPlayed} | ${rating.stars}</div>
-                `;
+                msgBox.style.lineHeight = '1.2';
+                msgBox.innerText = `🎉 ${T('VICTORY')}! +${stats.goldEarned}G 🎉`;
             },
 
             /**

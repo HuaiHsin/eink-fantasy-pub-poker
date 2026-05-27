@@ -2425,7 +2425,12 @@
             BLACK_MARKET: { en: "Black Market", zh: "黑市商店" },
             DECK_UPGRADE: { en: "Shop & Camp", zh: "整備與升級" },
             REWARD_GOLD_RELIC: { en: "Gold + Relic", zh: "金幣與遺物" },
-            UNKNOWN_REWARD: { en: "Story & Event", zh: "故事與奇遇" }
+            UNKNOWN_REWARD: { en: "Story & Event", zh: "故事與奇遇" },
+            // [新增] 敵人型態翻譯
+            ARCH_BALANCED: { en: "Balanced", zh: "均衡型" },
+            ARCH_SWIFT: { en: "Swarmer", zh: "連打型" },
+            ARCH_HEAVY: { en: "Heavy", zh: "重擊型" },
+            ARCH_SABOTEUR: { en: "Saboteur", zh: "詭計型" }
         };
         /* =========================================================================
            PART 1: GAME ENGINE (CORE LOGIC)
@@ -2512,51 +2517,88 @@
         const Generator = {
             genEnemy: function (stage) {
                 const isElite = (stage % 5 === 0); // 每 5 層固定菁英
-                const scale = Math.pow(1.15, stage - 1); // 基礎指數成長
+                
+                // 1. 優化成長曲線：HP 採用加速上升的指數曲線，ATK 採用二次多項式成長
+                const hpScale = Math.pow(1.12 + (stage * 0.003), stage - 1);
+                const baseAtk = Math.floor(5 + stage * 0.6 + Math.pow(stage, 1.3) * 0.1);
 
-                // 1. 基礎數值 [修正] 調降攻擊力，避免秒殺
-                let hp = Math.floor(200 * scale * (isElite ? 1.5 : 1));
-                let atk = Math.floor((6 + stage * 0.7) * (isElite ? 1.2 : 1));
-                let cd = isElite ? Utils.randInt(2, 3) : 4;
+                // 2. 隨機選取敵人的型態（Archetype），引進特色變化性
+                const archetypes = ['balanced', 'swift', 'heavy', 'saboteur'];
+                const archetype = Utils.pick(archetypes);
 
-                // 2. 名稱生成
+                let archHpMod = 1.0;
+                let archAtkMod = 1.0;
+                let archCd = isElite ? Utils.randInt(2, 3) : 4;
+                let archAi = Data.AI_TYPES.RANDOM;
+
+                // AI 演進
+                if (stage > 3) archAi = Utils.pick([Data.AI_TYPES.LOW, Data.AI_TYPES.HIGH]);
+                if (stage > 8) archAi = Data.AI_TYPES.HIGH;
+                if (stage > 12 || isElite) archAi = Data.AI_TYPES.MAX_HAND;
+
+                let skill = null;
+                // 詭計型必定攜帶一個干擾技能
+                if (archetype === 'saboteur') {
+                    skill = Utils.pick(C_SKILLS);
+                } else {
+                    if (Utils.chance(isElite ? 1.0 : (stage > 3 ? 0.4 : 0.0))) skill = Utils.pick(C_SKILLS);
+                }
+
+                // 根據型態調整屬性與冷卻時間（CD）
+                if (archetype === 'swift') {
+                    archHpMod = 0.65;  // 血量低
+                    archAtkMod = 0.35; // 傷害低
+                    archCd = 1;        // 每回合都攻擊！
+                    archAi = Data.AI_TYPES.LOW;
+                } else if (archetype === 'heavy') {
+                    archHpMod = 1.4;   // 血量高
+                    archAtkMod = 1.6;  // 傷害極高
+                    archCd = 5;        // 蓄力時間長（5 回合）
+                    archAi = Data.AI_TYPES.MAX_HAND; // 智商最高，總是出最強牌
+                } else if (archetype === 'saboteur') {
+                    archHpMod = 0.9;
+                    archAtkMod = 0.75;
+                    archCd = 3;        // CD 較短
+                }
+
+                // 基礎數值計算
+                let hp = Math.floor(200 * hpScale * (isElite ? 1.5 : 1) * archHpMod);
+                let atk = Math.max(1, Math.floor(baseAtk * (isElite ? 1.2 : 1) * archAtkMod));
+                let cd = archCd;
+                let ai = archAi;
+
+                // 3. 名稱生成
                 const adj = Utils.pick(C_MONSTER_NAMES.Adj);
                 const noun = Utils.pick(C_MONSTER_NAMES.Noun);
                 let nameEn = `${adj.en} ${noun.en}`;
                 let nameZh = `${adj.zh}${noun.zh}`;
 
-                // 3. [新增] 詞綴系統 (Floor 3 開始出現，機率 40% + 層數加成)
+                // 4. 詞綴系統 (Floor 3 開始，詞綴加乘在基礎上)
                 let prefix = null;
                 if (stage >= 3 && (Utils.chance(0.4 + (stage * 0.02)) || isElite)) {
                     prefix = Utils.pick(C_MONSTER_PREFIX);
-                    // 套用詞綴修正
                     hp = Math.floor(hp * prefix.mod.hp);
                     atk = Math.floor(atk * prefix.mod.atk);
                     cd = Math.max(1, cd + prefix.mod.cd); // CD 至少為 1
 
-                    // 組合新名字
                     nameEn = `${prefix.en} ${nameEn}`;
                     nameZh = `${prefix.zh}${noun.zh}`;
                 }
 
                 const name = { en: nameEn, zh: nameZh };
 
-                // 4. AI 演進 (越後期越聰明)
-                let ai = Data.AI_TYPES.RANDOM;
-                if (stage > 3) ai = Utils.pick([Data.AI_TYPES.LOW, Data.AI_TYPES.HIGH]);
-                if (stage > 8) ai = Data.AI_TYPES.HIGH;
-                if (stage > 12 || isElite) ai = Data.AI_TYPES.MAX_HAND;
-
-                // 5. 顏文字生成
+                // 5. 顏文字生成與型態圖示
                 const bp = Utils.pick(C_MONSTER_PARTS.Brackets);
                 const face = `${bp[0]}${Utils.pick(C_MONSTER_PARTS.Eye)}${Utils.pick(C_MONSTER_PARTS.Mouth)}${Utils.pick(C_MONSTER_PARTS.Eye)}${bp[1]}`;
-                const kao = (isElite ? '👑' : '') + (prefix ? '⚡' : '') + face;
+                
+                let archIcon = '';
+                if (archetype === 'swift') archIcon = '⚡';
+                else if (archetype === 'heavy') archIcon = '🐢';
+                else if (archetype === 'saboteur') archIcon = '🔮';
 
-                // 6. 技能生成 (後期機率增加)
-                let skill = null;
-                if (Utils.chance(isElite ? 1.0 : (stage > 3 ? 0.4 : 0.0))) skill = Utils.pick(C_SKILLS);
+                const kao = (isElite ? '👑' : '') + archIcon + face;
 
-                // 7. [新增] 特性生成 (5層後開始，20%機率，菁英必定有)
+                // 6. 特性生成 (5層後開始)
                 let trait = null;
                 if (stage >= 5 && (Utils.chance(0.2) || isElite)) {
                     const suitList = ['s', 'h', 'd', 'c'];
@@ -2565,7 +2607,7 @@
                     trait = { type: traitType, suit: traitSuit };
                 }
 
-                return { id: Math.random(), name, kao, hp, maxHp: hp, atk, cd, maxCd: cd, ai, isElite, skill, trait };
+                return { id: Math.random(), name, kao, hp, maxHp: hp, atk, cd, maxCd: cd, ai, isElite, skill, trait, archetype };
             }
         };
 
@@ -3680,7 +3722,7 @@
                 } else if (type === Data.AI_TYPES.MAX_HAND) { picked = this.aiFindBestMatch(valid).slice(0, Math.max(1, 5 - lock)); } else {
                     let maxIdx = valid[0]; for (let i of valid) if (this.state.table[i].val > this.state.table[maxIdx].val) maxIdx = i; picked.push(maxIdx);
                 }
-                let cards = picked.map(i => this.state.table[i]); const res = this.evalHand(cards);
+                let cards = picked.map(i => this.state.table[i]); const res = this.evalHand(cards, true);
                 let mul = 1.0; if (this.state.field.suit && cards.some(c => c.suit === this.state.field.suit)) mul = this.state.field.rate;
                 let dmg = Math.floor(res.dmg * mul);
                 
@@ -3720,7 +3762,7 @@
                 if (u.length === 0 && jokers >= 5) return true; if (u.includes(14)) u.unshift(1); let needed = 5 - jokers; if (needed <= 0) return true;
                 for (let i = 0; i <= u.length - needed; i++) { let sub = u.slice(i, i + needed); if (sub[sub.length - 1] - sub[0] <= 4) return true; } return false;
             },
-            evalHand: function (cards) {
+            evalHand: function (cards, isEnemy = false) {
                 // [修改] 鬼魅卡 (Spectral Card) 作為萬能牌 Wildcard，其餘卡牌作為正常牌
                 let jokers = cards.filter(c => c.rank === 'JO' || c.enchant === 'spectral').length;
                 let normal = cards.filter(c => c.rank !== 'JO' && c.enchant !== 'spectral').sort((a, b) => b.val - a.val);
@@ -3753,13 +3795,43 @@
                 else if ((cVals[0] || 0) >= 2 && (cVals[1] || 0) >= 2) name = "Two Pair";
                 else if (maxC === 2) name = "Pair";
                 
+                if (isEnemy) {
+                    // 敵人的傷害公式：基於敵人的 atk 與牌型倍率
+                    let enemyAtk = (this.state.enemy && this.state.enemy.atk) ? this.state.enemy.atk : 10;
+                    let archMults = {
+                        'High Card': 1.0,
+                        'Pair': 1.5,
+                        'Two Pair': 2.0,
+                        'Three of a Kind': 2.5,
+                        'Straight': 3.0,
+                        'Flush': 3.5,
+                        'Full House': 4.0,
+                        'Four of a Kind': 5.5,
+                        'Straight Flush': 7.0,
+                        'Five of a Kind': 9.0
+                    };
+                    let mult = archMults[name] || 1.0;
+                    let dmg = Math.floor(enemyAtk * mult);
+
+                    // [新增] 2. 敵人的特性效果與花色石
+                    const usedSuits = cards.map(c => c.suit).filter(s => s !== 'j' && s !== 'JO');
+                    if (this.state.enemy && this.state.enemy.trait && usedSuits.includes(this.state.enemy.trait.suit)) {
+                        if (this.state.enemy.trait.type === 'immune') {
+                            dmg = 0;
+                        } else if (this.state.enemy.trait.type === 'weakness') {
+                            dmg = Math.floor(dmg * 1.5);
+                        }
+                    }
+                    return { name: name, dmg: dmg };
+                }
+
                 let base = Data.HAND_SCORES[name];
                 const bonus = this.getRelicBonus();
 
                 // [新增] 黃金卡額外提供 +30 基礎分數/籌碼
                 let goldChips = cards.filter(c => c.enchant === 'gold').length * 30;
 
-                // [新增] 計算基礎傷害，納入黃金卡額外點數與元素光環加成
+                // [新增] 計算基礎傷害，納入黃金卡額外點數與元素光狂加成
                 let multVal = base[1] + bonus.mult;
                 if (this.state.auras.element) {
                     multVal += 3;
@@ -3980,7 +4052,12 @@
                         const traitText = e.trait.type === 'immune' ? T('TRAIT_IMMUNE') : T('TRAIT_WEAK');
                         traitTag = ` <span class='tag ${e.trait.type}'>${traitText} ${suitSym}</span>`;
                     }
-                    document.getElementById('e-tags').innerHTML = `<span class='tag warn'>${e.ai}</span> <span class='tag'>${T('CD')}:${e.cd}</span>${traitTag}`;
+                    let archTag = '';
+                    if (e.archetype) {
+                        const archName = T('ARCH_' + e.archetype.toUpperCase());
+                        archTag = ` <span class='tag' style='background: black; color: white;'>${archName}</span>`;
+                    }
+                    document.getElementById('e-tags').innerHTML = `<span class='tag warn'>${e.ai}</span> <span class='tag'>${T('CD')}:${e.cd}</span>${traitTag}${archTag}`;
                     // [優化P3] 使用 helper method
                     const pKao = this.getPlayerKao();
                     // [翻譯] YOU

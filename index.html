@@ -1783,6 +1783,182 @@
                 background-color: #e0e0e0;
             }
         }
+
+        /* === 響應式高度適配 (高度 <= 850px) === */
+        @media (max-height: 850px) {
+            body {
+                font-size: 14px;
+            }
+            .stone-box {
+                padding: 8px;
+                margin-bottom: 8px;
+            }
+            button.game-btn {
+                padding: 10px;
+                font-size: 16px;
+            }
+            /* 戰鬥場景適配 */
+            .zone-enemy {
+                padding: 6px;
+            }
+            .enemy-row {
+                gap: 5px;
+            }
+            .kao {
+                font-size: 16px;
+            }
+            .puzzle-question {
+                margin-top: 4px;
+            }
+            .battle-status-bar {
+                margin-bottom: 4px;
+            }
+            .status-pill {
+                padding: 2px 6px;
+                font-size: 12px;
+            }
+            .hud-row {
+                margin-bottom: 2px;
+            }
+            #msg-box {
+                min-height: 24px !important;
+                font-size: 13px !important;
+            }
+            .card-area {
+                gap: 4px;
+            }
+            .card, .card-placeholder {
+                transform: none !important;
+            }
+            .suit-big {
+                font-size: 24px;
+            }
+            .rank-txt, .rank-bot {
+                font-size: 12px;
+            }
+            .zone-player {
+                padding: 6px 6px 0 6px;
+            }
+            .tag-row {
+                min-height: 18px !important;
+            }
+            .tag {
+                font-size: 10px !important;
+                padding: 1px 4px !important;
+            }
+            .hp-frame {
+                height: 16px;
+            }
+            .hp-text {
+                font-size: 10px;
+            }
+            .btn-group {
+                padding: 6px;
+            }
+            
+            /* 起始畫面與地圖適配 */
+            #scene-start {
+                padding: 10px;
+            }
+            .title-box {
+                padding: 10px;
+                margin: 5px 0;
+            }
+            .title-box h3 {
+                font-size: 14px !important;
+            }
+            .ascii-art {
+                font-size: 5px;
+                line-height: 5px;
+            }
+            #scene-map {
+                padding: 10px;
+            }
+            .wanted-poster {
+                padding: 10px;
+                margin-bottom: 12px;
+            }
+            .wanted-poster::before {
+                font-size: 18px;
+                top: -12px;
+            }
+            .wanted-title {
+                font-size: 16px;
+            }
+        }
+
+        /* === 響應式高度適配 (高度 <= 720px) === */
+        @media (max-height: 720px) {
+            body {
+                font-size: 12px;
+            }
+            .stone-box {
+                padding: 6px;
+                margin-bottom: 6px;
+            }
+            button.game-btn {
+                padding: 8px;
+                font-size: 14px;
+            }
+            /* 戰鬥場景極度壓縮 */
+            .zone-enemy {
+                padding: 4px;
+            }
+            .kao {
+                font-size: 14px;
+            }
+            .status-pill {
+                padding: 1px 4px;
+                font-size: 11px;
+            }
+            #msg-box {
+                min-height: 20px !important;
+                font-size: 11px !important;
+            }
+            .card-area {
+                gap: 2px;
+            }
+            .suit-big {
+                font-size: 18px;
+            }
+            .rank-txt, .rank-bot {
+                font-size: 10px;
+            }
+            .zone-player {
+                padding: 4px 4px 0 4px;
+            }
+            .hp-frame {
+                height: 12px;
+            }
+            .hp-text {
+                font-size: 9px;
+            }
+            
+            /* 地圖與起始畫面 */
+            #scene-start {
+                padding: 5px;
+            }
+            .title-box {
+                padding: 6px;
+            }
+            .ascii-art {
+                font-size: 4px;
+                line-height: 4px;
+            }
+            #scene-map {
+                padding: 5px;
+            }
+            .wanted-poster {
+                padding: 8px;
+                margin-bottom: 8px;
+            }
+            .wanted-poster::before {
+                display: none;
+            }
+            .wanted-title {
+                font-size: 14px;
+            }
+        }
     </style>
 
 

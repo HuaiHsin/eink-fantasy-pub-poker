@@ -2288,6 +2288,7 @@
             MSG_NO_DISC: { en: "🚫 No Discards!", zh: "🚫 無法再棄牌！" },
             MSG_LOCKED: { en: "🚫 Locked!", zh: "🚫 被鎖定！" },
             MSG_SELECT: { en: "⚠️ Select cards!", zh: "⚠️ 請選擇卡牌！" },
+            MSG_SELECT_ONE: { en: "⚠️ Select 1 card!", zh: "⚠️ 請選擇 1 張牌！" },
             MSG_SUIT_BAN: { en: "🚫 Suit Banned!", zh: "🚫 花色被禁用！" },
             MSG_WEAK: { en: "Weakened!", zh: "虛弱！傷害減半" },
             MSG_DODGE: { en: "👢 DODGE!", zh: "👢 閃避！" },
@@ -3210,7 +3211,7 @@
 
             onPuzzleAnswer: async function () {
                 if (this.state.selected.length !== 1) {
-                    this.msg(USER_LANG === 'zh' ? '⚠️ 請選擇 1 張牌！' : '⚠️ Select 1 card!');
+                    this.msg(T('MSG_SELECT_ONE'));
                     return;
                 }
                 const selIdx = this.state.selected[0];
@@ -3392,7 +3393,7 @@
                 }
                 // [修正] 使用 baseMaxHp 而非硬編碼 100，保留事件永久加成
                 const bonus = this.getRelicBonus(); this.state.p_max = this.state.baseMaxHp + bonus.hp; this.state.discLeft = 3 + bonus.disc;
-                this.showScene('scene-battle'); this.renderUI(); this.msg(this.state.hint || "Draft from the table!");
+                this.showScene('scene-battle'); this.renderUI(); this.msg(this.state.hint ? T(this.state.hint) : T('MSG_START'));
                 this.state.logs = [];
                 this.state.handsPlayedInBattle = {};
                 this.state.auras = { windrunner: false, element: false, echo: false };
@@ -3438,16 +3439,16 @@
                 // [新增] 解謎模式 → 換題目
                 if (this.state.puzzleMode) { this.onPuzzleSkip(); return; }
                 if (this.state.turn !== 'player') return;
-                if (BuffSys.isDiscardBanned()) { this.msg("🚫 Locked!"); return; }
-                if (this.state.discLeft <= 0) { this.msg("🚫 No Discards!"); return; }
-                if (this.state.selected.length === 0) { this.msg("⚠️ Select cards!"); return; }
+                if (BuffSys.isDiscardBanned()) { this.msg(T('MSG_LOCKED')); return; }
+                if (this.state.discLeft <= 0) { this.msg(T('MSG_NO_DISC')); return; }
+                if (this.state.selected.length === 0) { this.msg(T('MSG_SELECT')); return; }
                 const discardedIndices = [...this.state.selected];
                 const hookCount = this.getRelicCount('r_hook');
                 if (hookCount > 0) {
-                    let dmg = discardedIndices.length * 2 * Math.min(3, hookCount); this.state.enemy.hp = Math.max(0, this.state.enemy.hp - dmg); this.msg(`🪝 Hook: ${dmg} DMG!`);
+                    let dmg = discardedIndices.length * 2 * Math.min(3, hookCount); this.state.enemy.hp = Math.max(0, this.state.enemy.hp - dmg); this.msg(USER_LANG === 'zh' ? `🪝 毒鉤造成 ${dmg} 點傷害！` : `🪝 Hook: ${dmg} DMG!`);
                     // [新增] 記錄鉤子傷害到統計
                     this.state.battleStats.totalDamage += dmg;
-                } else this.msg(`Cards discarded.`);
+                } else this.msg(T('MSG_DISCARD'));
                 discardedIndices.forEach(idx => this.state.table[idx] = null);
                 this.state.discLeft--;
                 this.state.battleStats.discardsUsed++; // [新增] 記錄棄牌次數
@@ -3460,17 +3461,17 @@
                 // [新增] 解謎模式 → 作答
                 if (this.state.puzzleMode) { this.onPuzzleAnswer(); return; }
                 if (this.state.turn !== 'player') return;
-                if (this.state.selected.length === 0) { this.msg("⚠️ Select cards!"); return; }
+                if (this.state.selected.length === 0) { this.msg(T('MSG_SELECT')); return; }
 
                 let cards = this.state.selected.map(i => this.state.table[i]);
-                if (cards.find(c => BuffSys.isSuitBanned(c.suit))) { this.msg(`🚫 Suit Banned!`); return; }
+                if (cards.find(c => BuffSys.isSuitBanned(c.suit))) { this.msg(T('MSG_SUIT_BAN')); return; }
 
                 // [新增] 鬼魅卡自傷判定 (每張 -5 HP)
                 const spectralCardsCount = cards.filter(c => c && c.enchant === 'spectral').length;
                 if (spectralCardsCount > 0) {
                     const totalSelfDmg = spectralCardsCount * 5;
                     this.state.p_hp = Math.max(0, this.state.p_hp - totalSelfDmg);
-                    this.msg(`🔮 Spectral Card Self-damage: -${totalSelfDmg} HP 鬼魅卡噬血！`);
+                    this.msg(USER_LANG === 'zh' ? `🔮 鬼魅卡噬血自傷：-${totalSelfDmg} HP！` : `🔮 Spectral Card Self-damage: -${totalSelfDmg} HP!`);
                     this.showDamagePopup(totalSelfDmg, 'p-kao');
                     if (this.state.p_hp <= 0) {
                         this.renderUI();
@@ -3491,14 +3492,14 @@
                     // 特殊場地：重力 (Gravity) - 如果有 J,Q,K,A，傷害變 0.5倍
                     if (f.special === 'heavy' && cards.some(c => c.val >= 11)) {
                         multiplier = 0.5;
-                        this.msg("⚓ Gravity: Heavy cards weak!");
+                        this.msg(USER_LANG === 'zh' ? "⚓ 重力異常：大牌（J,Q,K,A）傷害減半！" : "⚓ Gravity: Heavy cards weak!");
                         await Utils.delay(500);
                     }
                     // 特殊場地：荊棘 (Thorns) - 出牌扣血
                     if (f.special === 'pain') {
                         const selfDmg = 5;
                         this.state.p_hp -= selfDmg;
-                        this.msg(`🌵 Thorns: -${selfDmg} HP`);
+                        this.msg(USER_LANG === 'zh' ? `🌵 荊棘反噬：-${selfDmg} HP` : `🌵 Thorns: -${selfDmg} HP`);
                         this.showDamagePopup(selfDmg, 'p-kao');
                         // 檢查是否自殺
                         if (this.state.p_hp <= 0) { this.renderUI(); await Utils.delay(500); this.gameOver(false); return; }
@@ -3514,15 +3515,15 @@
                 if (!this.state.auras.windrunner && (this.state.handsPlayedInBattle['Straight'] || 0) >= 3) {
                     this.state.auras.windrunner = true;
                     this.state.discLeft += 2;
-                    this.msg("🌬️ Windrunner Aura Activated: Discards +2! 疾風光環激活！");
+                    this.msg(USER_LANG === 'zh' ? "🌬️ 疾風光環激活：棄牌上限 +2！" : "🌬️ Windrunner Aura Activated: Discards +2!");
                 }
                 if (!this.state.auras.element && (this.state.handsPlayedInBattle['Flush'] || 0) >= 2) {
                     this.state.auras.element = true;
-                    this.msg("⚡ Element Aura Activated: Mult +3! 元素光環激活！");
+                    this.msg(USER_LANG === 'zh' ? "⚡ 元素光環激活：倍率（Mult）固定 +3！" : "⚡ Element Aura Activated: Mult +3!");
                 }
                 if (!this.state.auras.echo && ((this.state.handsPlayedInBattle['Pair'] || 0) + (this.state.handsPlayedInBattle['Two Pair'] || 0)) >= 4) {
                     this.state.auras.echo = true;
-                    this.msg("🔊 Echo Aura Activated: Play deals +20 True DMG! 迴聲光環激活！");
+                    this.msg(USER_LANG === 'zh' ? "🔊 迴聲光環激活：每次出牌追加 +20 真實傷害！" : "🔊 Echo Aura Activated: Play deals +20 True DMG!");
                 }
 
                 let dmg = Math.floor(res.dmg * multiplier);
@@ -3546,8 +3547,15 @@
                 this.state.battleStats.handsPlayed[res.name]++;
 
                 // [UI] 顯示場地名稱提示
-                const fieldTag = f.special ? ` [${f.icon}]` : (multiplier !== 1 ? ` (${f.name})` : '');
-                this.msg(`${res.name}: ${dmg}${fieldTag}`);
+                const fieldNameMap = {
+                    'Club+': { en: 'Club+', zh: '梅花+' },
+                    'Dia+': { en: 'Dia+', zh: '方塊+' },
+                    'Hrt+': { en: 'Hrt+', zh: '紅心+' },
+                    'Spd+': { en: 'Spd+', zh: '黑桃+' }
+                };
+                const localizedFieldName = fieldNameMap[f.name] ? (fieldNameMap[f.name][USER_LANG] || fieldNameMap[f.name]['en']) : f.name;
+                const fieldTag = f.special ? ` [${f.icon}]` : (multiplier !== 1 ? ` (${localizedFieldName})` : '');
+                this.msg(`${T(HAND_KEY_MAP[res.name]) || res.name}: ${dmg}${fieldTag}`);
 
                 // [新增] 玻璃卡碎裂檢查
                 cards.forEach(c => {
@@ -3559,7 +3567,7 @@
                                     this.state.customDeck.splice(origIdx, 1);
                                 }
                             }
-                            this.msg(`💥 Glass Card [${c.rank}${Data.SUIT_META[c.suit].sym}] shattered! 玻璃卡碎裂了！`);
+                            this.msg(USER_LANG === 'zh' ? `💥 玻璃卡 [${c.rank}${Data.SUIT_META[c.suit].sym}] 碎裂粉碎了！` : `💥 Glass Card [${c.rank}${Data.SUIT_META[c.suit].sym}] shattered!`);
                             this.showDamagePopup(0, 'p-kao', { text: 'SHATTERED!' });
                         }
                     }
@@ -3577,7 +3585,7 @@
 
                 // [新增] 特殊場地：暴風 (Storm) - 每回合強制重新發牌 (洗掉場上的牌)
                 if (this.state.field.special === 'shuffle' && !this.hasRelic('r_umb')) {
-                    this.msg("🌀 Storm: Table shuffled!");
+                    this.msg(USER_LANG === 'zh' ? "🌀 暴風干擾：桌面手牌強制洗牌！" : "🌀 Storm: Table shuffled!");
                     this.state.table.fill(null); // 清空桌面
                     await Utils.delay(800);
                 }
@@ -3622,7 +3630,7 @@
                 if (steelCardsCount > 0 && dmg > 0) {
                     const reduction = steelCardsCount * 10;
                     dmg = Math.max(0, dmg - reduction);
-                    this.msg(`🛡️ Steel Protection: -${reduction} DMG! 鋼鐵防護！`);
+                    this.msg(USER_LANG === 'zh' ? `🛡️ 鋼鐵防護：抵消了 ${reduction} 點受到的傷害！` : `🛡️ Steel Protection: -${reduction} DMG!`);
                 }
 
                 if (this.hasRelic('r_gene') && res.name === 'Pair') { dmg = 0; this.msg(T('MSG_BLOCK')); this.showDamagePopup(0, 'p-kao', { text: 'BLOCKED!' }); }
@@ -3630,7 +3638,7 @@
                 else {
                     if (this.hasRelic('r_helm')) dmg = Math.max(0, dmg - 10);
                     this.state.p_hp = Math.max(0, this.state.p_hp - dmg);
-                    let sLog = this.triggerEnemySkill(); this.msg(`${T(this.state.enemy.name)}: ${res.name} (${dmg})${sLog}`);
+                    let sLog = this.triggerEnemySkill(); this.msg(`${T(this.state.enemy.name)}: ${T(HAND_KEY_MAP[res.name]) || res.name} (${dmg})${sLog}`);
                     this.showDamagePopup(dmg, 'p-kao');
                 }
                 picked.forEach(idx => this.state.table[idx] = null); this.renderUI(); await Utils.delay(1500);
@@ -3639,9 +3647,9 @@
                 const e = this.state.enemy; if (!e.skill || !Utils.chance(0.5)) return "";
                 const sk = e.skill; let log = "";
                 switch (sk.type) {
-                    case 'ban_suit': const suit = SUITS[Utils.randInt(0, 3)]; BuffSys.add('ban_suit', suit, 2, 'BAN'); log = ` [BAN]`; break;
-                    case 'no_disc': BuffSys.add('no_disc', null, 2, 'LOCK'); log = ` [LOCK]`; break;
-                    case 'weak': BuffSys.add('weak', null, 1, 'WEAK'); log = ` [WEAK]`; break;
+                    case 'ban_suit': const suit = SUITS[Utils.randInt(0, 3)]; BuffSys.add('ban_suit', suit, 2, 'BAN'); log = USER_LANG === 'zh' ? ` [禁色]` : ` [BAN]`; break;
+                    case 'no_disc': BuffSys.add('no_disc', null, 2, 'LOCK'); log = USER_LANG === 'zh' ? ` [鎖棄]` : ` [LOCK]`; break;
+                    case 'weak': BuffSys.add('weak', null, 1, 'WEAK'); log = USER_LANG === 'zh' ? ` [虛弱]` : ` [WEAK]`; break;
                 } return log;
             },
             aiFindBestMatch: function (valid) {
@@ -4238,7 +4246,24 @@
                 // [V3.3] 清除標記
                 this.state.lastGainedRelic = null;
             },
-            renderBuffs: function () { const bar = document.getElementById('p-buffs'); if (!bar) return; bar.innerHTML = ""; BuffSys.activeBuffs.forEach(b => { const el = document.createElement('span'); el.className = 'tag warn'; el.innerText = `${b.name}(${b.duration})`; bar.appendChild(el); }); },
+            renderBuffs: function () {
+                const bar = document.getElementById('p-buffs');
+                if (!bar) return;
+                bar.innerHTML = "";
+                const buffNameMap = {
+                    'BAN': { en: 'BAN', zh: '禁色' },
+                    'LOCK': { en: 'LOCK', zh: '鎖棄' },
+                    'WEAK': { en: 'WEAK', zh: '虛弱' },
+                    'BLESS': { en: 'BLESS', zh: '祝福' }
+                };
+                BuffSys.activeBuffs.forEach(b => {
+                    const el = document.createElement('span');
+                    el.className = 'tag warn';
+                    const localizedName = buffNameMap[b.name] ? (buffNameMap[b.name][USER_LANG] || buffNameMap[b.name]['en']) : b.name;
+                    el.innerText = `${localizedName}(${b.duration})`;
+                    bar.appendChild(el);
+                });
+            },
             toggleColor: function () { document.body.classList.toggle('bw-mode'); },
 
             /**

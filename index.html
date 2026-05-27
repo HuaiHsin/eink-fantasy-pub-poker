@@ -1682,9 +1682,15 @@
         .dragon-gate-decoration {
             font-size: 32px;
             text-align: center;
-            padding: 15px 0;
+            padding: 10px 0;
             background: linear-gradient(to bottom, #fff 0%, #f5f5f5 100%);
             border-bottom: 3px double black;
+            white-space: normal; /* 解決繼承 white-space: pre 導致大塊空白與跑版問題 */
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
         }
 
         /* 龍門卡牌居中容器 */
@@ -3764,13 +3770,7 @@
                     document.getElementById('e-hp-txt').style.mixBlendMode = 'normal';
 
                     // [優化] 上方：小狗動畫 + 裝飾
-                    const decorationHtml = `
-                        <div class="dragon-gate-decoration">
-                            <span class="puppy-walk">ฅ^•ﻌ•^ฅ</span>
-                            <span style="margin: 0 20px; opacity: 0.6;">🎴 ~ 🎴 ~ 🎴</span>
-                            <span class="puppy-walk" style="animation-delay: 1.5s;">ฅ^•ﻌ•^ฅ</span>
-                        </div>
-                    `;
+                    const decorationHtml = `<div class="dragon-gate-decoration"><span class="puppy-walk">ฅ^•ﻌ•^ฅ</span><span style="margin: 0 20px; opacity: 0.6;">🎴 ~ 🎴 ~ 🎴</span><span class="puppy-walk" style="animation-delay: 1.5s;">ฅ^•ﻌ•^ฅ</span></div>`;
                     document.getElementById('e-kao').innerHTML = decorationHtml;
 
                     // [新增] 左右場景裝飾

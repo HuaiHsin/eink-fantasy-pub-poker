@@ -2582,7 +2582,7 @@
                     cd = Math.max(1, cd + prefix.mod.cd); // CD 至少為 1
 
                     nameEn = `${prefix.en} ${nameEn}`;
-                    nameZh = `${prefix.zh}${noun.zh}`;
+                    nameZh = `${prefix.zh}${nameZh}`;
                 }
 
                 const name = { en: nameEn, zh: nameZh };
@@ -3235,8 +3235,13 @@
                     const ansVal = startVal + 4;
                     const ansRank = RANKS[ansVal - 2];
                     answer = { suit: Utils.pick(SUITS), rank: ansRank, val: ansVal };
-                    // 生成 7 張錯誤牌（排除正確答案的 rank）
+                    // 生成 7 張錯誤牌（排除所有可能完成順子的 rank）
                     const usedRanks = question.map(c => c.rank).concat([ansRank]);
+                    if (startVal > 2) {
+                        usedRanks.push(RANKS[startVal - 3]);
+                    } else if (startVal === 2) {
+                        usedRanks.push('A');
+                    }
                     const availRanks = RANKS.filter(r => !usedRanks.includes(r));
                     for (let i = 0; i < 7; i++) {
                         wrongCards.push({ suit: Utils.pick(SUITS), rank: availRanks[i % availRanks.length], val: Data.VALUES[availRanks[i % availRanks.length]] });
@@ -3257,8 +3262,8 @@
                     }
                 } else if (type === 'even') {
                     // 找偶數：給 4 張偶數牌，找第 5 張偶數
-                    const evenRanks = ['2', '4', '6', '8', '10', 'Q']; // val: 2,4,6,8,10,12
-                    const oddRanks = ['3', '5', '7', '9', 'J', 'K', 'A'];
+                    const evenRanks = ['2', '4', '6', '8', '10', 'Q', 'A']; // val: 2,4,6,8,10,12,14 (Ace is even)
+                    const oddRanks = ['3', '5', '7', '9', 'J', 'K'];
                     Utils.shuffle(evenRanks);
                     for (let i = 0; i < 4; i++) {
                         question.push({ suit: Utils.pick(SUITS), rank: evenRanks[i], val: Data.VALUES[evenRanks[i]] });
@@ -3269,8 +3274,8 @@
                     }
                 } else { // odd
                     // 找奇數：給 4 張奇數牌，找第 5 張奇數
-                    const oddRanks = ['3', '5', '7', '9', 'J', 'K', 'A']; // val: 3,5,7,9,11,13,14
-                    const evenRanks = ['2', '4', '6', '8', '10', 'Q'];
+                    const oddRanks = ['3', '5', '7', '9', 'J', 'K']; // val: 3,5,7,9,11,13
+                    const evenRanks = ['2', '4', '6', '8', '10', 'Q', 'A']; // val: 2,4,6,8,10,12,14
                     Utils.shuffle(oddRanks);
                     for (let i = 0; i < 4; i++) {
                         question.push({ suit: Utils.pick(SUITS), rank: oddRanks[i], val: Data.VALUES[oddRanks[i]] });
@@ -3734,8 +3739,15 @@
                     this.msg(USER_LANG === 'zh' ? `🛡️ 鋼鐵防護：抵消了 ${reduction} 點受到的傷害！` : `🛡️ Steel Protection: -${reduction} DMG!`);
                 }
 
+                let dodgeChance = 0;
+                this.state.relics.forEach(r => {
+                    if (r.effect && r.effect.dodge) {
+                        dodgeChance += r.effect.dodge;
+                    }
+                });
+
                 if (this.hasRelic('r_gene') && res.name === 'Pair') { dmg = 0; this.msg(T('MSG_BLOCK')); this.showDamagePopup(0, 'p-kao', { text: 'BLOCKED!' }); }
-                else if (this.hasRelic('r_boot') && Math.random() < 0.1) { dmg = 0; this.msg(T('MSG_DODGE')); this.showDamagePopup(0, 'p-kao', { text: 'DODGE!' }); }
+                else if (Math.random() < dodgeChance) { dmg = 0; this.msg(T('MSG_DODGE')); this.showDamagePopup(0, 'p-kao', { text: 'DODGE!' }); }
                 else {
                     if (this.hasRelic('r_helm')) dmg = Math.max(0, dmg - 10);
                     this.state.p_hp = Math.max(0, this.state.p_hp - dmg);
@@ -3758,9 +3770,18 @@
                 let keys = Object.keys(counts).sort((a, b) => counts[b].length - counts[a].length || b - a); return counts[keys[0]].slice(0, 5);
             },
             checkStraight: function (cards) {
-                if (cards.length < 5) return false; let jokers = cards.filter(c => c.rank === 'JO').length; let u = [...new Set(cards.filter(c => c.rank !== 'JO').map(c => c.val))].sort((a, b) => a - b);
-                if (u.length === 0 && jokers >= 5) return true; if (u.includes(14)) u.unshift(1); let needed = 5 - jokers; if (needed <= 0) return true;
-                for (let i = 0; i <= u.length - needed; i++) { let sub = u.slice(i, i + needed); if (sub[sub.length - 1] - sub[0] <= 4) return true; } return false;
+                if (cards.length < 5) return false;
+                let jokers = cards.filter(c => c.rank === 'JO' || c.enchant === 'spectral').length;
+                let u = [...new Set(cards.filter(c => c.rank !== 'JO' && c.enchant !== 'spectral').map(c => c.val))].sort((a, b) => a - b);
+                if (u.length === 0 && jokers >= 5) return true;
+                if (u.includes(14)) u.unshift(1);
+                let needed = 5 - jokers;
+                if (needed <= 0) return true;
+                for (let i = 0; i <= u.length - needed; i++) {
+                    let sub = u.slice(i, i + needed);
+                    if (sub[sub.length - 1] - sub[0] <= 4) return true;
+                }
+                return false;
             },
             evalHand: function (cards, isEnemy = false) {
                 // [修改] 鬼魅卡 (Spectral Card) 作為萬能牌 Wildcard，其餘卡牌作為正常牌
@@ -4107,6 +4128,8 @@
             showScene: function (id) { document.querySelectorAll('body > div[id^="scene-"]').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); },
 
             win: function () {
+                if (this.state.turn === 'win' || this.state.turn === 'ended') return;
+                this.state.turn = 'win';
                 this.state.killCount++;
 
                 if (this.state.enemy) {

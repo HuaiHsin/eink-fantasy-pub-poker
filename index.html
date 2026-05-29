@@ -556,6 +556,31 @@
             border-top: 2px solid #999;
         }
 
+        /* === [新增] 狀態標籤與欄位自動摺疊，緊湊版面 === */
+        .tag-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .tag-row:empty {
+            display: none !important;
+        }
+        .tag {
+            font-size: 12px;
+            padding: 2px 6px;
+            border: 2px solid black;
+            background: white;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.2);
+        }
+        .tag.warn {
+            background: #fff0f0;
+            border-color: black;
+        }
+
         /* === [優化] 頂部狀態列樣式 === */
         .battle-status-bar {
             display: flex;
@@ -813,9 +838,10 @@
         }
 
         .event-image {
-            font-size: 60px;
+            font-size: 48px; /* 稍微縮減大小，確保在行動端完整呈現 */
             text-align: center;
-            margin: 20px 0;
+            margin: 15px 0;
+            white-space: nowrap; /* 強制不換行，防表情符號/顏文字分裂跑版 */
         }
 
         .event-text {
@@ -1988,6 +2014,102 @@
                 font-size: 14px;
             }
         }
+
+        /* === [新增] E-ink 電子紙優化樣式 === */
+        
+        /* 1. 效能模式 (停用所有動畫與 transition) */
+        body.perf-mode * {
+            transition: none !important;
+            animation: none !important;
+        }
+
+        /* 2. 效能模式下傷害飄動數字之定點高對比黑框白底樣式 */
+        body.perf-mode .damage-popup {
+            animation: none !important;
+            transform: translateX(-50%) scale(1.3) !important;
+            text-shadow: none !important;
+            background: white !important;
+            color: black !important;
+            border: 3px solid black !important;
+            padding: 4px 8px !important;
+            box-shadow: 3px 3px 0px black !important;
+            font-size: 24px !important;
+            border-radius: 4px !important;
+        }
+        
+        body.perf-mode .damage-popup.heal {
+            background: black !important;
+            color: white !important;
+            border: 3px solid white !important;
+            outline: 2px solid black !important;
+        }
+
+        /* 3. 重要事件訊息列反白閃爍 */
+        .msg-flash {
+            background-color: white !important;
+            color: black !important;
+            border: 2px solid black !important;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5) !important;
+        }
+        body.bw-mode .msg-flash {
+            background-color: white !important;
+            color: black !important;
+            border: 2px solid black !important;
+        }
+
+        /* 4. 敵人蓄力警告 (閃爍警告，適配電子紙重繪) */
+        .charge-blink {
+            animation: charge-pulse 0.6s step-end infinite;
+        }
+        @keyframes charge-pulse {
+            50% {
+                opacity: 0.3;
+                transform: scale(1.05);
+            }
+        }
+        body.perf-mode .charge-blink {
+            animation: charge-pulse-bw 1s step-end infinite;
+        }
+        @keyframes charge-pulse-bw {
+            50% {
+                background-color: black !important;
+                color: white !important;
+            }
+        }
+
+        /* 5. 特殊場地氛圍網格與紋理背景 */
+        /* 濃霧場地 - 半透明白霧遮罩 */
+        .zone-table.field-blind::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.45);
+            pointer-events: none;
+            z-index: 1;
+        }
+        /* 荊棘場地 - 尖刺紅框 */
+        .zone-table.field-pain {
+            border: 4px dashed #cc0000 !important;
+            box-shadow: inset 0 0 10px rgba(204, 0, 0, 0.25) !important;
+        }
+        body.bw-mode .zone-table.field-pain {
+            border: 4px dashed #000000 !important;
+        }
+        /* 重力場地 - 底部重力陰影 */
+        .zone-table.field-heavy {
+            box-shadow: inset 0 -15px 20px rgba(0, 0, 0, 0.25) !important;
+            border-bottom: 5px solid black !important;
+        }
+        body.bw-mode .zone-table.field-heavy {
+            box-shadow: inset 0 -15px 0px rgba(0, 0, 0, 0.2) !important;
+        }
+        /* 暴風場地 - 斜線背景紋理 */
+        .zone-table.field-shuffle {
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px) !important;
+        }
+        body.bw-mode .zone-table.field-shuffle {
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.12) 10px, rgba(0,0,0,0.12) 20px) !important;
+        }
     </style>
 
 
@@ -2003,14 +2125,23 @@
             <pre class="ascii-art"><span id="cover-art"></span></pre>
             <p style="font-size: 12px;">A Poker-based Roguelike Game</p>
         </div>
-        <div style="margin: 20px 0;">
-            <!-- [修正P3] 移除重複的 cover-art ID -->
+        <!-- [新增] 起始牌組選擇 -->
+        <div style="margin: 15px auto; width: 80%; text-align: left; font-size: 13px; font-weight: bold; border: 2px solid black; padding: 10px; background: white;">
+            <div>🎒 起始牌組 / STARTER DECK:</div>
+            <select id="select-deck" onchange="Game.changeStarterDeck()" style="width: 100%; margin-top: 5px; padding: 6px; font-family: inherit; font-size: 14px; font-weight: 900; border: 2px solid black; background: white; color: black;">
+                <option value="classic">標準牌組 (Classic Deck)</option>
+                <option value="swift" id="opt-deck-swift" disabled>疾風牌組 (Swift Deck) 🔒 (需 100 積分)</option>
+                <option value="lucky" id="opt-deck-lucky" disabled>幸運牌組 (Lucky Deck) 🔒 (需 250 積分)</option>
+            </select>
+            <div id="deck-desc" style="font-size: 11px; margin-top: 6px; color: #555; font-weight: normal;">標準 54 張牌庫（包含 2 張鬼牌）。</div>
+            <div style="margin-top: 10px; border-top: 1px dashed black; padding-top: 6px; font-size: 11px;">🏆 累積冒險積分 (Meta Points): <span id="meta-points-display" style="font-size:13px; font-weight:900;">0</span></div>
         </div>
         <button class="game-btn blink-cursor" onclick="Game.startGame()" style="width: 80%;">START ADVENTURE</button>
         <button class="game-btn" onclick="Game.toggleRules()" style="width: 80%; margin-top: 10px;">📜 HOW TO
             PLAY</button>
         <button class="game-btn" onclick="Game.toggleColor()" style="width: 80%; margin-top: 10px;">🎨 COLOR /
             B&amp;W</button>
+        <button class="game-btn" onclick="Game.togglePerformanceMode()" id="btn-perf-mode" style="width: 80%; margin-top: 10px;">⚡ NORMAL MODE</button>
     </div>
 
     <div id="scene-map" class="hidden">
@@ -2082,8 +2213,8 @@
                 <div style="font-size: 12px; font-weight: bold; border-right: 2px solid black; padding-right: 8px; white-space: nowrap; height: 100%; display: flex; align-items: center;" id="battle-relics-label">🎒 道具</div>
                 <div class="relic-bar" id="battle-relics" style="flex: 1; display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-start; margin: 0; min-height: auto;"></div>
             </div>
-            <div class="tag-row" id="p-buffs" style="justify-content: flex-start; min-height: 24px;"></div>
-            <div class="tag-row" id="p-auras" style="justify-content: flex-start; min-height: 24px; margin-bottom: 4px;"></div>
+            <div class="tag-row" id="p-buffs" style="justify-content: flex-start;"></div>
+            <div class="tag-row" id="p-auras" style="justify-content: flex-start; margin-bottom: 4px;"></div>
             <div class="hp-frame" style="margin-bottom: 10px;">
                 <div class="hp-fill" id="p-hp-bar"></div>
                 <div class="hp-text" id="p-hp-txt"></div>
@@ -2312,6 +2443,8 @@
             BTN_DEBUG: { en: "🚧 DEBUG: SKIP TUTORIAL", zh: "🚧 測試：跳過教學" },
             BTN_RULES: { en: "📜 HOW TO PLAY", zh: "📜 遊戲說明" },
             BTN_COLOR: { en: "🎨 COLOR / B&W", zh: "🎨 色彩切換" },
+            BTN_PERF_NORMAL: { en: "⚡ NORMAL MODE", zh: "⚡ 正常動畫模式" },
+            BTN_PERF_ACTIVE: { en: "⚡ E-INK PERF", zh: "⚡ 電子紙效能模式" },
             TITLE_HANDS: { en: "HAND RANKINGS", zh: "牌型說明" },
             BTN_CLOSE: { en: "CLOSE", zh: "關閉" },
             BTN_DISCARD: { en: "DISCARD", zh: "棄牌" },
@@ -2518,7 +2651,52 @@
             genEnemy: function (stage) {
                 const isElite = (stage % 5 === 0); // 每 5 層固定菁英
                 
-                // 1. 優化成長曲線：HP 採用加速上升的指數曲線，ATK 採用二次多項式成長
+                // 1. 關底 Boss 機制 (第 5, 10, 15, 20, 25 層)
+                if (isElite) {
+                    let boss = null;
+                    if (stage === 5) {
+                        boss = {
+                            name: { en: "Forest Elder [BOSS]", zh: "森林守護古樹 [BOSS]" },
+                            kao: "🌲(╬◣д◢)🌲", hp: 800, maxHp: 800, atk: 15, cd: 3, maxCd: 3,
+                            ai: Data.AI_TYPES.MAX_HAND, isElite: true,
+                            skill: { type: 'weak' }, archetype: 'heavy', trait: null
+                        };
+                    } else if (stage === 10) {
+                        boss = {
+                            name: { en: "Cavern Golem [BOSS]", zh: "洞窟巨石怪 [BOSS]" },
+                            kao: "🪨(╬ಠ益ಠ)🪨", hp: 2000, maxHp: 2000, atk: 28, cd: 4, maxCd: 4,
+                            ai: Data.AI_TYPES.MAX_HAND, isElite: true,
+                            skill: { type: 'ban_suit' }, archetype: 'saboteur', trait: null
+                        };
+                    } else if (stage === 15) {
+                        boss = {
+                            name: { en: "Castle Monarch [BOSS]", zh: "城堡君王 [BOSS]" },
+                            kao: "👑(╬ﾟДﾟ)👑", hp: 4200, maxHp: 4200, atk: 52, cd: 3, maxCd: 3,
+                            ai: Data.AI_TYPES.MAX_HAND, isElite: true,
+                            skill: { type: 'no_disc' }, archetype: 'balanced', trait: null
+                        };
+                    } else if (stage === 20) {
+                        boss = {
+                            name: { en: "Volcanic Dragon [BOSS]", zh: "火山烈焰巨龍 [BOSS]" },
+                            kao: "🔥(╬`Д´)🦖🔥", hp: 8500, maxHp: 8500, atk: 95, cd: 2, maxCd: 2,
+                            ai: Data.AI_TYPES.MAX_HAND, isElite: true,
+                            skill: { type: 'weak' }, archetype: 'swift', trait: null
+                        };
+                    } else if (stage === 25) {
+                        boss = {
+                            name: { en: "Void Specter [BOSS]", zh: "虛空幽靈主宰 [BOSS]" },
+                            kao: "🔮(╬ఠ_ఠ)🔮", hp: 18000, maxHp: 18000, atk: 200, cd: 3, maxCd: 3,
+                            ai: Data.AI_TYPES.MAX_HAND, isElite: true,
+                            skill: { type: 'ban_suit' }, archetype: 'saboteur', trait: null
+                        };
+                    }
+                    if (boss) {
+                        boss.id = Math.random();
+                        return boss;
+                    }
+                }
+                
+                // 2. 優化成長曲線：HP 採用加速上升的指數曲線，ATK 採用二次多項式成長
                 const hpScale = Math.pow(1.12 + (stage * 0.003), stage - 1);
                 const baseAtk = Math.floor(5 + stage * 0.6 + Math.pow(stage, 1.3) * 0.1);
 
@@ -2626,7 +2804,7 @@
         };
 
         const Game = {
-            state: { stage: 1, storyIndex: 0, p_hp: 100, p_max: 100, baseMaxHp: 100, deck: [], table: [], selected: [], enemy: null, field: null, turn: 'player', relics: [], discLeft: 3, rewardPicks: 0, tableMax: 8, hint: "", trainBonus: 0, logs: [], turnCount: 1, maxDmg: 0, killCount: 0, startTime: null, battleStats: { totalDamage: 0, handsPlayed: {}, discardsUsed: 0, turnsPlayed: 0, startTime: null }, retryCount: 3, lastBattleEnemy: null, gold: 50, handsPlayedInBattle: {}, auras: { windrunner: false, element: false, echo: false }, puppyHealed: false, chefDefeated: false, masterChefDefeated: false, masterChefBattle: false },
+            state: { stage: 1, storyIndex: 0, p_hp: 100, p_max: 100, baseMaxHp: 100, deck: [], table: [], selected: [], enemy: null, field: null, turn: 'player', relics: [], discLeft: 3, rewardPicks: 0, tableMax: 8, hint: "", trainBonus: 0, logs: [], turnCount: 1, maxDmg: 0, killCount: 0, startTime: null, battleStats: { totalDamage: 0, handsPlayed: {}, discardsUsed: 0, turnsPlayed: 0, startTime: null }, retryCount: 3, lastBattleEnemy: null, gold: 50, handsPlayedInBattle: {}, auras: { windrunner: false, element: false, echo: false }, puppyHealed: false, chefDefeated: false, masterChefDefeated: false, masterChefBattle: false, performanceMode: false, merchantKey: false },
 
             // [優化P3] 抽取玩家顏文字邏輯為 helper method
             getPlayerKao: function () {
@@ -2663,7 +2841,11 @@
                 this.state.chefDefeated = false;
                 this.state.masterChefDefeated = false;
                 this.state.masterChefBattle = false;
+                this.state.starterDeckType = 'classic';
+                this.state.merchantKey = false;
                 BuffSys.clear();
+
+                this.initMetaProgression();
 
 
                 document.querySelectorAll('.modal').forEach(e => e.classList.add('hidden'));
@@ -2677,6 +2859,10 @@
                 if (btnRules) btnRules.innerText = T('BTN_RULES');
                 const btnColor = document.querySelector('button[onclick="Game.toggleColor()"]');
                 if (btnColor) btnColor.innerText = T('BTN_COLOR');
+                const btnPerf = document.getElementById('btn-perf-mode');
+                if (btnPerf) {
+                    btnPerf.innerText = this.state.performanceMode ? T('BTN_PERF_ACTIVE') : T('BTN_PERF_NORMAL');
+                }
 
                 this.showScene('scene-start');
             },
@@ -2721,13 +2907,76 @@
                 }
             },
 
-            createBaseDeck: function () {
-                let d = []; let id = 0;
-                for (let s of SUITS) {
-                    for (let r of RANKS) {
-                        d.push({ suit: s, rank: r, val: Data.VALUES[r], id: id++, enchant: null });
+            initMetaProgression: function () {
+                let pts = parseInt(localStorage.getItem('eink_poker_meta_points') || '0');
+                const display = document.getElementById('meta-points-display');
+                if (display) display.innerText = pts;
+
+                const optSwift = document.getElementById('opt-deck-swift');
+                if (optSwift) {
+                    if (pts >= 100) {
+                        optSwift.disabled = false;
+                        optSwift.innerText = USER_LANG === 'zh' ? '疾風牌組 (大牌+鬼牌)' : 'Swift Deck (High Ranks + Jokers)';
+                    } else {
+                        optSwift.disabled = true;
+                        optSwift.innerText = USER_LANG === 'zh' ? '疾風牌組 (🔒 需 100 積分)' : 'Swift Deck (🔒 Needs 100 pts)';
                     }
                 }
+                const optLucky = document.getElementById('opt-deck-lucky');
+                if (optLucky) {
+                    if (pts >= 250) {
+                        optLucky.disabled = false;
+                        optLucky.innerText = USER_LANG === 'zh' ? '幸運牌組 (黑桃/紅心)' : 'Lucky Deck (Spades/Hearts)';
+                    } else {
+                        optLucky.disabled = true;
+                        optLucky.innerText = USER_LANG === 'zh' ? '幸運牌組 (🔒 需 250 積分)' : 'Lucky Deck (🔒 Needs 250 pts)';
+                    }
+                }
+            },
+
+            changeStarterDeck: function () {
+                const selectEl = document.getElementById('select-deck');
+                if (!selectEl) return;
+                const type = selectEl.value;
+                this.state.starterDeckType = type;
+                const desc = document.getElementById('deck-desc');
+                if (desc) {
+                    if (type === 'classic') {
+                        desc.innerText = USER_LANG === 'zh' ? '標準 54 張牌庫（包含 2 張鬼牌）。適合穩紮穩打。' : 'Standard 54-card deck (includes 2 Jokers).';
+                    } else if (type === 'swift') {
+                        desc.innerText = USER_LANG === 'zh' ? '只含 8、9、10、J、Q、K、A 與 鬼牌（共 30 張）。極易湊出順子！' : 'Only contains 8-A and Jokers (30 cards). Extremely easy to form Straights!';
+                    } else if (type === 'lucky') {
+                        desc.innerText = USER_LANG === 'zh' ? '只含黑桃 ♠ 與紅心 ♥ 的所有卡牌（共 28 張）。極易湊出同花！' : 'Only contains Spades and Hearts (28 cards). Extremely easy to form Flushes!';
+                    }
+                }
+            },
+
+            createBaseDeck: function () {
+                let d = []; let id = 0;
+                const deckType = this.state.starterDeckType || 'classic';
+
+                if (deckType === 'swift') {
+                    const swiftRanks = ['8', '9', '10', 'J', 'Q', 'K', 'A'];
+                    for (let s of SUITS) {
+                        for (let r of swiftRanks) {
+                            d.push({ suit: s, rank: r, val: Data.VALUES[r], id: id++, enchant: null });
+                        }
+                    }
+                } else if (deckType === 'lucky') {
+                    const luckySuits = ['s', 'h'];
+                    for (let s of luckySuits) {
+                        for (let r of RANKS) {
+                            d.push({ suit: s, rank: r, val: Data.VALUES[r], id: id++, enchant: null });
+                        }
+                    }
+                } else {
+                    for (let s of SUITS) {
+                        for (let r of RANKS) {
+                            d.push({ suit: s, rank: r, val: Data.VALUES[r], id: id++, enchant: null });
+                        }
+                    }
+                }
+
                 d.push({ suit: 'j', rank: 'JO', val: 15, id: id++, enchant: null });
                 d.push({ suit: 'j', rank: 'JO', val: 15, id: id++, enchant: null });
                 return d;
@@ -2855,7 +3104,11 @@
 
                     let enchantTag = '';
                     if (card.enchant) {
-                        const encSymbol = card.enchant === 'gold' ? 'G' : card.enchant === 'glass' ? 'X' : card.enchant === 'steel' ? 'S' : 'M';
+                        const encSymbol = card.enchant === 'gold' ? 'G' 
+                            : card.enchant === 'glass' ? 'X' 
+                            : card.enchant === 'steel' ? 'S' 
+                            : card.enchant === 'spectral' ? 'M' 
+                            : 'L'; // L for Lucky
                         enchantTag = `<div class="card-badge" style="background: black; color: white;">${encSymbol}</div>`;
                     }
 
@@ -2886,7 +3139,7 @@
                     const msg = USER_LANG === 'zh' ? `已移除 [${card.rank}${Data.SUIT_META[card.suit].sym}]。` : `Removed [${card.rank}${Data.SUIT_META[card.suit].sym}].`;
                     this.showEventResult(msg);
                 } else if (mode === 'enchant') {
-                    const enchants = ['gold', 'glass', 'steel', 'spectral'];
+                    const enchants = ['gold', 'glass', 'steel', 'spectral', 'lucky'];
                     const chosen = Utils.pick(enchants);
                     card.enchant = chosen;
                     this.state.gold -= 100;
@@ -2897,7 +3150,8 @@
                         gold: { en: "Gold [G]", zh: "黃金 [G]" },
                         glass: { en: "Glass [X]", zh: "玻璃 [X]" },
                         steel: { en: "Steel [S]", zh: "鋼鐵 [S]" },
-                        spectral: { en: "Spectral [M]", zh: "鬼魅 [M]" }
+                        spectral: { en: "Spectral [M]", zh: "鬼魅 [M]" },
+                        lucky: { en: "Lucky [L]", zh: "幸運 [L]" }
                     };
                     const msg = USER_LANG === 'zh' ? `附魔成功！[${card.rank}${Data.SUIT_META[card.suit].sym}] 獲得了 ${T(enchantNames[chosen])} 屬性。` : `Enchantment successful! [${card.rank}${Data.SUIT_META[card.suit].sym}] gained ${T(enchantNames[chosen])}.`;
                     this.showEventResult(msg);
@@ -2960,10 +3214,13 @@
                     }
 
                     // 3. 右路 (Right Path) - 神秘事件 (35%機率遭遇憤怒廚神師父的復仇事件)
-                    const randomEvents = C_EVENTS.filter(e => e.id !== 'e_beginning' && e.id !== 'e_first_event' && e.id !== 'e_injured_puppy' && e.id !== 'e_chef_master');
+                    const randomEvents = C_EVENTS.filter(e => e.id !== 'e_beginning' && e.id !== 'e_first_event' && e.id !== 'e_injured_puppy' && e.id !== 'e_chef_master' && e.id !== 'e_golden_chest');
                     let evt = null;
                     if (this.state.chefDefeated && !this.state.masterChefDefeated && Utils.chance(0.35)) {
                         evt = C_EVENTS.find(e => e.id === 'e_chef_master');
+                    }
+                    if (!evt && this.state.merchantKey && Utils.chance(0.50)) {
+                        evt = C_EVENTS.find(e => e.id === 'e_golden_chest');
                     }
                     if (!evt) {
                         evt = Utils.weightedPick(randomEvents);
@@ -3162,6 +3419,21 @@
                         }
                         break;
                     }
+                    case 'buy_key': {
+                        this.state.gold = Math.max(0, this.state.gold - 40);
+                        this.state.merchantKey = true;
+                        break;
+                    }
+                    case 'use_key': {
+                        this.state.merchantKey = false;
+                        const threeStarRelics = C_RELICS.filter(r => r.rarity === 3);
+                        const relic = Utils.pick(threeStarRelics);
+                        if (relic) {
+                            this.state.relics.push(relic);
+                            msg += ` (${T('GET')}: ${T(relic.name)})`;
+                        }
+                        break;
+                    }
                     case 'puppy_share': {
                         this.state.p_hp = Math.min(this.state.p_hp + 25, this.state.p_max);
                         this.state.gold += 50;
@@ -3258,11 +3530,12 @@
                     const otherSuits = SUITS.filter(s => s !== flushSuit);
                     for (let i = 0; i < 7; i++) {
                         const ws = Utils.pick(otherSuits);
-                        wrongCards.push({ suit: ws, rank: Utils.pick(RANKS), val: Data.VALUES[Utils.pick(RANKS)] });
+                        const wr = Utils.pick(RANKS);
+                        wrongCards.push({ suit: ws, rank: wr, val: Data.VALUES[wr] });
                     }
                 } else if (type === 'even') {
                     // 找偶數：給 4 張偶數牌，找第 5 張偶數
-                    const evenRanks = ['2', '4', '6', '8', '10', 'Q', 'A']; // val: 2,4,6,8,10,12,14 (Ace is even)
+                    const evenRanks = ['2', '4', '6', '8', '10', 'Q']; // val: 2,4,6,8,10,12 (Ace removed to avoid ambiguity)
                     const oddRanks = ['3', '5', '7', '9', 'J', 'K'];
                     Utils.shuffle(evenRanks);
                     for (let i = 0; i < 4; i++) {
@@ -3275,7 +3548,7 @@
                 } else { // odd
                     // 找奇數：給 4 張奇數牌，找第 5 張奇數
                     const oddRanks = ['3', '5', '7', '9', 'J', 'K']; // val: 3,5,7,9,11,13
-                    const evenRanks = ['2', '4', '6', '8', '10', 'Q', 'A']; // val: 2,4,6,8,10,12,14
+                    const evenRanks = ['2', '4', '6', '8', '10', 'Q']; // val: 2,4,6,8,10,12 (Ace removed to avoid ambiguity)
                     Utils.shuffle(oddRanks);
                     for (let i = 0; i < 4; i++) {
                         question.push({ suit: Utils.pick(SUITS), rank: oddRanks[i], val: Data.VALUES[oddRanks[i]] });
@@ -3324,8 +3597,19 @@
                 const selCard = this.state.table[selIdx];
                 const puzzle = this.state.puzzle;
 
-                // 檢查答案
-                if (selCard.rank === puzzle.answer.rank && selCard.suit === puzzle.answer.suit) {
+                // 檢查答案 (數學化判定)
+                let isCorrect = false;
+                if (puzzle.type === 'straight') {
+                    isCorrect = this.checkStraight([...puzzle.question, selCard]);
+                } else if (puzzle.type === 'flush') {
+                    isCorrect = (selCard.suit === puzzle.question[0].suit);
+                } else if (puzzle.type === 'even') {
+                    isCorrect = (Data.VALUES[selCard.rank] % 2 === 0);
+                } else if (puzzle.type === 'odd') {
+                    isCorrect = (Data.VALUES[selCard.rank] % 2 !== 0);
+                }
+
+                if (isCorrect) {
                     // 答對！
                     this.msg(T('FAIRY_CORRECT'));
                     this.state.puzzleMode = false;
@@ -3452,6 +3736,7 @@
             },
 
             startBattle: function (enemyGen, fixedLevel = null) {
+                this.state.battleOver = false;
                 // [新增] 保存敵人數據用於重試
                 this.state.lastBattleEnemy = { enemyGen, fixedLevel };
 
@@ -3534,12 +3819,14 @@
             createDeck: function () { let d = []; let id = 0; for (let s of SUITS) for (let r of RANKS) d.push({ suit: s, rank: r, val: Data.VALUES[r], id: id++ }); d.push({ suit: 'j', rank: 'JO', val: 15, id: id++ }); d.push({ suit: 'j', rank: 'JO', val: 15, id: id++ }); return Utils.shuffle(d); },
             dealTable: function () { for (let i = 0; i < this.state.tableMax; i++) if (this.state.table[i] === null && this.state.deck.length > 0) this.state.table[i] = this.state.deck.pop(); },
             toggleCard: function (idx) {
+                if (this.state.battleOver) return;
                 if (this.state.turn !== 'player') return;
                 const pos = this.state.selected.indexOf(idx);
                 if (pos !== -1) this.state.selected.splice(pos, 1); else if (this.state.selected.length < 5) this.state.selected.push(idx);
                 this.renderUI();
             },
             onDiscard: async function () {
+                if (this.state.battleOver) return;
                 // [新增] 射龍門模式 → 不中
                 if (this.state.dragonGateMode) { this.onDragonGateAnswer(false); return; }
                 // [新增] 解謎模式 → 換題目
@@ -3562,6 +3849,7 @@
                 if (this.state.enemy.hp <= 0) this.win(); else this.endTurn();
             },
             onPlay: async function () {
+                if (this.state.battleOver) return;
                 // [新增] 射龍門模式 → 中
                 if (this.state.dragonGateMode) { this.onDragonGateAnswer(true); return; }
                 // [新增] 解謎模式 → 作答
@@ -3766,8 +4054,59 @@
                 } return log;
             },
             aiFindBestMatch: function (valid) {
-                let counts = {}; valid.forEach(idx => { const c = this.state.table[idx]; let k = c.val; if (c.rank === 'JO') k = 99; if (!counts[k]) counts[k] = []; counts[k].push(idx); });
-                let keys = Object.keys(counts).sort((a, b) => counts[b].length - counts[a].length || b - a); return counts[keys[0]].slice(0, 5);
+                // 1. 取得對應卡牌與索引
+                let cards = valid.map(idx => ({ idx: idx, card: this.state.table[idx] })).filter(c => c.card !== null);
+                if (cards.length === 0) return [];
+
+                // 取得鬼牌與正常牌
+                let jokers = cards.filter(c => c.card.rank === 'JO' || c.card.enchant === 'spectral');
+                let normals = cards.filter(c => c.card.rank !== 'JO' && c.card.enchant !== 'spectral');
+
+                // 2. 優先搜尋同花 (Flush) - 如果同一花色牌數 + 鬼牌數 >= 5
+                let suitGroups = {};
+                normals.forEach(c => {
+                    if (!suitGroups[c.card.suit]) suitGroups[c.card.suit] = [];
+                    suitGroups[c.card.suit].push(c);
+                });
+                for (let suit in suitGroups) {
+                    if (suitGroups[suit].length + jokers.length >= 5) {
+                        let selected = suitGroups[suit].slice(0, 5 - jokers.length).concat(jokers).slice(0, 5);
+                        return selected.map(c => c.idx);
+                    }
+                }
+
+                // 3. 搜尋順子 (Straight) - 使用全組合搜尋（Valid卡牌最多 8 張，組合數極小，運算瞬間完成）
+                function getCombinations(arr, k) {
+                    let results = [];
+                    function helper(start, combo) {
+                        if (combo.length === k) { results.push(combo); return; }
+                        for (let i = start; i < arr.length; i++) { helper(i + 1, [...combo, arr[i]]); }
+                    }
+                    helper(0, []);
+                    return results;
+                }
+                if (cards.length >= 5) {
+                    let combos = getCombinations(cards, 5);
+                    for (let combo of combos) {
+                        if (Game.checkStraight(combo.map(c => c.card))) {
+                            return combo.map(c => c.idx);
+                        }
+                    }
+                }
+
+                // 4. 備用：尋找點數最多的對子/三條/四條 (原對稱邏輯)
+                let counts = {};
+                valid.forEach(idx => {
+                    const c = this.state.table[idx];
+                    if (c) {
+                        let k = c.val;
+                        if (c.rank === 'JO') k = 99;
+                        if (!counts[k]) counts[k] = [];
+                        counts[k].push(idx);
+                    }
+                });
+                let keys = Object.keys(counts).sort((a, b) => counts[b].length - counts[a].length || b - a);
+                return counts[keys[0]].slice(0, 5);
             },
             checkStraight: function (cards) {
                 if (cards.length < 5) return false;
@@ -3857,6 +4196,15 @@
                 if (this.state.auras.element) {
                     multVal += 3;
                 }
+                // [新增] 幸運卡 (Lucky Card) 附魔同花額外加倍率
+                let luckyCount = cards.filter(c => c && c.enchant === 'lucky').length;
+                if (luckyCount > 0 && isFlush) {
+                    multVal += luckyCount * 8;
+                }
+                // [新增] 遠古卷軸 (r_scroll) 順子額外 +50% 倍率效果
+                if (this.hasRelic('r_scroll') && (name === 'Straight' || name === 'Straight Flush')) {
+                    multVal = Math.floor(multVal * 1.5);
+                }
                 let dmg = (base[0] + bonus.chip + this.state.trainBonus + sum + goldChips) * multVal;
 
                 // [新增] 1. 花色石加成
@@ -3885,6 +4233,11 @@
                     if (c.enchant === 'glass') glassMult *= 2.0;
                 });
                 dmg = Math.floor(dmg * glassMult);
+
+                // [新增] 鐵王冠 (Iron Crown) HP < 30% 傷害翻倍效果
+                if (this.hasRelic('r_crown') && (this.state.p_hp / this.state.p_max) < 0.3) {
+                    dmg = Math.floor(dmg * 2.0);
+                }
 
                 return { name: name, dmg: dmg };
             },
@@ -3944,7 +4297,7 @@
                     document.getElementById('e-hp-txt').style.mixBlendMode = 'normal';
 
                     // [優化] 上方：小狗動畫 + 裝飾
-                    const decorationHtml = `<div class="dragon-gate-decoration"><span class="puppy-walk">ฅ^•ﻌ•^ฅ</span><span style="margin: 0 20px; opacity: 0.6;">🎴 ~ 🎴 ~ 🎴</span><span class="puppy-walk" style="animation-delay: 1.5s;">ฅ^•ﻌ•^ฅ</span></div>`;
+                    const decorationHtml = `<div class="dragon-gate-decoration"><span class="puppy-walk">ฅ^•ﻌ•^ฅ</span><span style="margin: 0 20px; opacity: 0.6;">🎴</span><span class="puppy-walk" style="animation-delay: 1.5s;">ฅ^•ﻌ•^ฅ</span></div>`;
                     document.getElementById('e-kao').innerHTML = decorationHtml;
 
                     // [新增] 左右場景裝飾
@@ -4053,7 +4406,16 @@
                     const e = this.state.enemy;
                     const arrow = '<span class="turn-arrow">◀</span>';
                     // [翻譯] 敵人名字
-                    let eHtml = `${e.kao} ${T(e.name)}`; if (this.state.turn === 'enemy') eHtml += arrow; document.getElementById('e-kao').innerHTML = eHtml;
+                    let eHtml = `${e.kao} ${T(e.name)}`; if (this.state.turn === 'enemy') eHtml += arrow; 
+                    const eKaoEl = document.getElementById('e-kao');
+                    eKaoEl.innerHTML = eHtml;
+                    
+                    // [新增] 敵人蓄力警告 (CD <= 1 時加 charge-blink 類別)
+                    if (e.cd <= 1 && this.state.turn === 'player') {
+                        eKaoEl.classList.add('charge-blink');
+                    } else {
+                        eKaoEl.classList.remove('charge-blink');
+                    }
 
                     // [新增] 渲染動態場景裝飾
                     const scene = Data.SCENE_DECORATORS.find(s => this.state.stage >= s.range[0] && this.state.stage <= s.range[1]) || Data.SCENE_DECORATORS[0];
@@ -4067,6 +4429,15 @@
 
                     document.getElementById('e-hp-bar').style.width = (e.hp / e.maxHp * 100) + '%';
 
+                    // [新增] 渲染場地特殊氛圍網格背景類別
+                    const zoneTable = document.querySelector('.zone-table');
+                    if (zoneTable) {
+                        zoneTable.className = 'zone-table'; // 重置場地類別
+                        if (f.special) {
+                            zoneTable.classList.add(`field-${f.special}`);
+                        }
+                    }
+
                     let traitTag = '';
                     if (e.trait) {
                         const suitSym = Data.SUIT_META[e.trait.suit].sym;
@@ -4076,9 +4447,15 @@
                     let archTag = '';
                     if (e.archetype) {
                         const archName = T('ARCH_' + e.archetype.toUpperCase());
-                        archTag = ` <span class='tag' style='background: black; color: white;'>${archName}</span>`;
+                        // [新增] 為三種怪物型態標籤加上高辨識度主色/專屬邊框
+                        let archStyle = "background: black; color: white; border: 2px solid black;";
+                        if (e.archetype === 'swift') archStyle = "background: #f0fff0; color: #006400; border: 2px solid #006400;";
+                        else if (e.archetype === 'heavy') archStyle = "background: #f0f8ff; color: #00008b; border: 2px solid #00008b;";
+                        else if (e.archetype === 'saboteur') archStyle = "background: #fff0f5; color: #8b008b; border: 2px dashed #8b008b;";
+                        archTag = ` <span class='tag' style='${archStyle}'>${archName}</span>`;
                     }
-                    document.getElementById('e-tags').innerHTML = `<span class='tag warn'>${e.ai}</span> <span class='tag'>${T('CD')}:${e.cd}</span>${traitTag}${archTag}`;
+                    const cdClass = (e.cd <= 1 && this.state.turn === 'player') ? "tag warn charge-blink" : "tag";
+                    document.getElementById('e-tags').innerHTML = `<span class='tag warn'>${e.ai}</span> <span class='${cdClass}'>${T('CD')}:${e.cd}</span>${traitTag}${archTag}`;
                     // [優化P3] 使用 helper method
                     const pKao = this.getPlayerKao();
                     // [翻譯] YOU
@@ -4128,6 +4505,7 @@
             showScene: function (id) { document.querySelectorAll('body > div[id^="scene-"]').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); },
 
             win: function () {
+                this.state.battleOver = true;
                 if (this.state.turn === 'win' || this.state.turn === 'ended') return;
                 this.state.turn = 'win';
                 this.state.killCount++;
@@ -4218,6 +4596,7 @@
             },
 
             gameOver: function (win) {
+                this.state.battleOver = true;
                 const modal = document.getElementById('modal-gameover');
                 const title = document.getElementById('go-title');
                 const content = document.getElementById('go-content'); // 我們需要去 HTML 新增這個 ID
@@ -4266,8 +4645,17 @@
                 }
 
                 // 6. 生成結算單內容
+                // Calculate earned Meta Points
+                let ptsEarned = this.state.stage * 10 + (win ? 100 : 0);
+                let currentPts = parseInt(localStorage.getItem('eink_poker_meta_points') || '0');
+                localStorage.setItem('eink_poker_meta_points', (currentPts + ptsEarned).toString());
+
                 content.innerHTML = `
                     <div class="death-summary">
+                        <div class="summary-row" style="background: #f0ffff; border: 1px dashed black; padding: 4px; margin-bottom: 8px;">
+                            <span>🏆 META PTS 獲得積分</span>
+                            <b class="bold" style="color: #00008b;">+${ptsEarned} (共 ${(currentPts + ptsEarned)} 點)</b>
+                        </div>
                         <div class="summary-row">
                             <span>🏆 RANK 稱號</span>
                             <span class="bold">${rank}</span>
@@ -4463,6 +4851,14 @@
                 });
             },
             toggleColor: function () { document.body.classList.toggle('bw-mode'); },
+            togglePerformanceMode: function () {
+                this.state.performanceMode = !this.state.performanceMode;
+                document.body.classList.toggle('perf-mode', this.state.performanceMode);
+                const btn = document.getElementById('btn-perf-mode');
+                if (btn) {
+                    btn.innerText = this.state.performanceMode ? T('BTN_PERF_ACTIVE') : T('BTN_PERF_NORMAL');
+                }
+            },
 
             /**
              * 切換遊戲說明 Modal
@@ -4658,6 +5054,16 @@
                 // 2. 記錄到歷史日誌中
                 const speaker = this.state.turn === 'player' ? 'YOU' : 'ENM';
                 this.state.logs.push({ turn: this.state.turnCount, speaker: speaker, text: t });
+
+                // 3. [新增] 關鍵事件反白閃爍
+                const isImportant = /🌬️|⚡|🔊|💥|🌵|🌀|⚓|🪝|🎉|🛡️|\[/.test(t);
+                if (isImportant) {
+                    const msgBox = document.getElementById('msg-box');
+                    if (msgBox) {
+                        msgBox.classList.add('msg-flash');
+                        setTimeout(() => msgBox.classList.remove('msg-flash'), 400);
+                    }
+                }
             },
 
             // [新增] 切換與渲染日誌彈跳視窗
@@ -4867,10 +5273,16 @@
                 // 加入容器
                 container.appendChild(popup);
 
-                // 動畫結束後移除
-                popup.addEventListener('animationend', () => {
-                    popup.remove();
-                });
+                // 動畫結束後移除 (效能模式下使用 setTimeout 避免殘影)
+                if (document.body.classList.contains('perf-mode')) {
+                    setTimeout(() => {
+                        popup.remove();
+                    }, 300);
+                } else {
+                    popup.addEventListener('animationend', () => {
+                        popup.remove();
+                    });
+                }
             }
         };
         /* =========================================================================
@@ -4931,7 +5343,9 @@
             { id: 'r_umb', name: { en: 'Umb', zh: '黑傘' }, icon: '☂', desc: { en: 'No Field', zh: '無視場地效果' }, effect: { ignore_field: true }, rarity: 3 },
             { id: 'r_dice', name: { en: 'L.Dice', zh: '運氣骰' }, icon: '?', desc: { en: '+/- 15% Dmg', zh: '傷害浮動 +/-15%' }, effect: { random_dmg: 0.15 }, rarity: 3 },
             { id: 'r_lock', name: { en: 'Lock', zh: '大鎖' }, icon: '✖', desc: { en: 'Enemy Pick-1', zh: '敵人掀牌數 -1' }, effect: { special: 'lock' }, rarity: 3 },
-            { id: 'r_bone', name: { en: 'Dog Bone', zh: '小狗骨頭' }, icon: '🦴', desc: { en: 'Dodge +5%, HP +15', zh: '閃避率 +5%, 生命值 +15' }, effect: { dodge: 0.05, hp: 15 }, rarity: 2 }
+            { id: 'r_bone', name: { en: 'Dog Bone', zh: '小狗骨頭' }, icon: '🦴', desc: { en: 'Dodge +5%, HP +15', zh: '閃避率 +5%, 生命值 +15' }, effect: { dodge: 0.05, hp: 15 }, rarity: 2 },
+            { id: 'r_crown', name: { en: 'Iron Crown', zh: '鐵王冠' }, icon: '👑', desc: { en: 'HP < 30% x2 DMG', zh: '生命值 < 30% 時傷害翻倍' }, effect: { special: 'crown' }, rarity: 3 },
+            { id: 'r_scroll', name: { en: 'Ancient Scroll', zh: '遠古卷軸' }, icon: '📜', desc: { en: 'Straight +50% Mult', zh: '手牌為順子時額外 +50% 倍率' }, effect: { special: 'scroll' }, rarity: 2 }
         ];
 
         // [3] 怪物名稱 (Monster Names) - 雙語化
@@ -5124,6 +5538,22 @@
                 choices: [
                     { text: { en: 'Eat the Legendary Dish', zh: '吃下傳奇復仇料理' }, type: 'master_chef_eat', res: '' },
                     { text: { en: 'Prepare to fight!', zh: '準備戰鬥！' }, type: 'master_chef_fight', res: '' }
+                ]
+            },
+            {
+                id: 'e_merchant', name: { en: 'Mysterious Merchant', zh: '神秘商人' }, kao: '👤(◕_◕)🎒',
+                text: { en: 'A merchant in a dark hood calls you over: "Hey kid... want a special key? Only 40 gold!"', zh: '一位身披兜帽的神秘商人向你招手：「嘿……想要一把特別的鑰匙嗎？只要 40 金幣！」' },
+                choices: [
+                    { text: { en: 'Buy Key (-40G)', zh: '花費 40G 購買鑰匙' }, type: 'buy_key', res: { en: 'He hands you a heavy, gold-engraved key with a grin.', zh: '他咧嘴一笑，遞給了你一把沉甸甸的金雕古鑰。' } },
+                    { text: { en: 'Refuse', zh: '拒絕他' }, type: 'leave', res: { en: 'He grunts and vanishes into the shadows.', zh: 'He grunts and vanishes into the shadows.' } }
+                ]
+            },
+            {
+                id: 'e_golden_chest', name: { en: 'Golden Locked Chest', zh: '鎖住的黃金寶箱' }, kao: '🔑[👑🌟👑]',
+                text: { en: 'You spot a luxurious golden chest locked with a heavy padlock. You have the Merchant\'s Key!', zh: '你發現了一個極其奢華的黃金寶箱，上面鎖著一把沉重的掛鎖。你正好有神秘商人的鑰匙！' },
+                choices: [
+                    { text: { en: 'Use Merchant\'s Key (Unlock 3-Star Relic)', zh: '使用神秘鑰匙 (開出3星傳奇遺物)' }, type: 'use_key', res: { en: 'Click! The padlock snaps open! You find an legendary artifact inside!', zh: '咔噠！掛鎖應聲落鎖！你在箱子裡找到了一個稀有的傳奇遺物！' } },
+                    { text: { en: 'Leave it', zh: '直接離開' }, type: 'leave', res: { en: 'You walk away, leaving the treasure behind.', zh: '你轉身走開，留下了寶藏。' } }
                 ]
             }
         ];

@@ -3155,6 +3155,11 @@
             },
 
             getRelicBonus: function () { let bonus = { chip: 0, mult: 0, disc: 0, hp: 0 }; this.state.relics.forEach(r => { for (let k in r.effect) bonus[k] += r.effect[k]; }); return bonus; },
+            updateMaxHp: function () {
+                const bonus = this.getRelicBonus();
+                this.state.p_max = this.state.baseMaxHp + bonus.hp;
+                this.state.p_hp = Math.min(this.state.p_hp, this.state.p_max);
+            },
             hasRelic: function (id) { return this.state.relics.some(r => r.id === id); },
             getRelicCount: function (id) { return this.state.relics.filter(r => r.id === id).length; },
             // [新增] 劇情進度管理器
@@ -3559,13 +3564,14 @@
                         // [修正P2] 明確聲明 'leave' type（不做任何事，直接顯示結果）
                         break;
                 }
+                this.updateMaxHp();
                 if (this.state.p_hp <= 0) { this.gameOver(false); return; }
                 this.showEventResult(msg);
             },
 
             showEventResult: function (text) { document.getElementById('event-result-msg').innerText = text; document.getElementById('modal-event-result').classList.remove('hidden'); },
 
-            addRandomRelic: function () { let pool = C_RELICS; this.state.relics.push(pool[Utils.randInt(0, pool.length - 1)]); },
+            addRandomRelic: function () { let pool = C_RELICS; this.state.relics.push(pool[Utils.randInt(0, pool.length - 1)]); this.updateMaxHp(); },
 
             // ============================================================
             // [新增] 小仙女的考驗 - 解謎小遊戲
@@ -4673,6 +4679,7 @@
                     legendaryRelic = Utils.pick(threeStarRelics);
                     if (legendaryRelic) {
                         this.state.relics.push(legendaryRelic);
+                        this.updateMaxHp();
                     }
                 }
 
@@ -4693,6 +4700,7 @@
                         const relic = C_RELICS.find(r => r.id === this.state.battleRewardRule.id);
                         if (relic) {
                             this.state.relics.push(relic);
+                            this.updateMaxHp();
                             const msg = `${T('VICTORY')}! ${T('GET')}: ${T(relic.name)}`;
                             this.state.battleRewardRule = null;
                             this.showEventResult(msg);
@@ -4882,6 +4890,7 @@
                 // [修正P1] 使用 dataset 而非 style.background 判斷，避免瀏覽器回傳 rgb(0,0,0)
                 if (this.state.rewardPicks <= 0 || el.dataset.picked === 'true') return;
                 this.state.relics.push(relic);
+                this.updateMaxHp();
                 el.dataset.picked = 'true'; // [修正P1] 標記已選取
                 el.style.background = 'black';
                 el.style.color = 'white';

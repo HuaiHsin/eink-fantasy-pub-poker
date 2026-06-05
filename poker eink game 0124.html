@@ -3960,8 +3960,9 @@
                 discardedIndices.forEach(idx => this.state.table[idx] = null);
                 this.state.discLeft--;
                 this.state.battleStats.discardsUsed++; // [新增] 記錄棄牌次數
-                this.state.selected = []; this.renderUI(); await Utils.delay(1000);
-                if (this.state.enemy.hp <= 0) this.win(); else this.endTurn();
+                this.state.selected = []; this.renderUI(); await Utils.delay(500);
+                this.dealTable(); this.renderUI();
+                if (this.state.enemy.hp <= 0) this.win();
             },
             onPlay: async function () {
                 if (this.state.battleOver) return;

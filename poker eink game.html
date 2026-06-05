@@ -585,8 +585,9 @@
                 } else this.msg(`Cards discarded.`);
                 discardedIndices.forEach(idx => this.state.table[idx] = null);
                 this.state.discLeft--; this.state.selected = [];
-                this.renderUI(); await Utils.delay(1000);
-                if(this.state.enemy.hp <= 0) this.win(); else this.endTurn();
+                this.renderUI(); await Utils.delay(500);
+                this.dealTable(); this.renderUI();
+                if(this.state.enemy.hp <= 0) this.win();
             },
             onPlay: async function() {
                 if(this.state.turn !== 'player') return;

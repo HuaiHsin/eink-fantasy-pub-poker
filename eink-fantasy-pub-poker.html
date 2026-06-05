@@ -1420,8 +1420,9 @@
                     let dmg = discardedIndices.length * 2 * Math.min(3, hookCount); this.state.enemy.hp = Math.max(0, this.state.enemy.hp - dmg); this.msg(`🪝 Hook: ${dmg} DMG!`);
                 } else this.msg(`Cards discarded.`);
                 discardedIndices.forEach(idx => this.state.table[idx] = null);
-                this.state.discLeft--; this.state.selected = []; this.renderUI(); await Utils.delay(1000);
-                if (this.state.enemy.hp <= 0) this.win(); else this.endTurn();
+                this.state.discLeft--; this.state.selected = []; this.renderUI(); await Utils.delay(500);
+                this.dealTable(); this.renderUI();
+                if (this.state.enemy.hp <= 0) this.win();
             },
             onPlay: async function () {
                 if (this.state.turn !== 'player') return;

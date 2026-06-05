@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Poker RPG: Config Edition</title>
+    <link href="https://cdn.jsdelivr.net/npm/rpg-awesome@0.2.0/css/rpg-awesome.min.css" rel="stylesheet">
     <style>
         /* === 1. 基礎設定 (預設：高對比彩色) === */
         :root {
@@ -184,7 +185,8 @@
         }
 
         .wanted-poster::before {
-            content: '📍';
+            content: "\e972";
+            font-family: 'RPGAwesome';
             position: absolute;
             top: -15px;
             left: 50%;
@@ -229,7 +231,8 @@
         }
 
         .event-poster::before {
-            content: '❓';
+            content: "\e9ff";
+            font-family: 'RPGAwesome';
         }
 
         .camp-poster {
@@ -238,7 +241,18 @@
         }
 
         .camp-poster::before {
-            content: '🔥';
+            content: "\e954";
+            font-family: 'RPGAwesome';
+        }
+
+        .shop-poster {
+            border-color: #8a6d3b;
+            background: #fcf8e3;
+        }
+
+        .shop-poster::before {
+            content: "\e9e4";
+            font-family: 'RPGAwesome';
         }
 
         /* === [Damage Popup] 傷害數字飄動 === */
@@ -2151,7 +2165,7 @@
         <div id="map-choices" style="padding: 10px;"></div>
         <!-- 玩家資訊列區塊 -->
         <div class="player-info-bar" style="margin-top: 20px; display: flex; align-items: center; border: 2px solid black; background: white; padding: 10px; gap: 15px; box-shadow: 3px 3px 0px #ccc;">
-            <div style="font-size: 18px; font-weight: bold; white-space: nowrap; border-right: 2px solid black; padding-right: 15px; display: flex; align-items: center;">💰 <span id="map-gold" style="margin-left: 5px;">0</span>G</div>
+            <div style="font-size: 18px; font-weight: bold; white-space: nowrap; border-right: 2px solid black; padding-right: 15px; display: flex; align-items: center;"><i class="ra ra-gold-bar ra-fw" style="margin-right: 4px;"></i> <span id="map-gold" style="margin-left: 5px;">0</span>G</div>
             <div class="relic-bar" id="map-relics" style="flex: 1; display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-start; margin: 0; min-height: auto;"></div>
         </div>
     </div>
@@ -2205,7 +2219,7 @@
                 <div class="kao" id="p-kao"></div>
                 <!-- 金幣資訊列 -->
                 <div class="player-gold-bar" style="border: 2px solid black; background: white; padding: 4px 10px; display: flex; align-items: center; height: 32px; box-sizing: border-box; box-shadow: 2px 2px 0px #ccc;">
-                    <span style="font-size: 15px; font-weight: bold; display: flex; align-items: center;">💰 <span id="battle-gold" style="margin-left: 3px;">0</span>G</span>
+                    <span style="font-size: 15px; font-weight: bold; display: flex; align-items: center;"><i class="ra ra-gold-bar ra-fw" style="margin-right: 4px;"></i> <span id="battle-gold" style="margin-left: 3px;">0</span>G</span>
                 </div>
             </div>
             <!-- 遺物道具列區塊（單獨佔用整行，空間極其充裕） -->
@@ -2231,7 +2245,7 @@
     <div id="scene-shop" class="hidden">
         <div class="stone-box bold center" style="font-size: 20px;" id="shop-title">🏪 BLACK MARKET SHOP 黑市商店</div>
         <div style="text-align: center; margin: 10px 0; font-size: 18px; font-weight: 900; background: white; border: 2px solid black; padding: 6px;">
-            💰 <span id="shop-gold">0</span> Gold
+            <i class="ra ra-gold-bar ra-fw" style="margin-right: 4px;"></i> <span id="shop-gold">0</span> Gold
         </div>
         <div id="shop-list" style="padding: 10px; display: flex; flex-direction: column; gap: 12px; max-height: 55vh; overflow-y: auto;">
             <!-- Shop items will be rendered here dynamically -->
@@ -2253,7 +2267,7 @@
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px;">
                     <div style="display: flex; justify-content: space-between;">
-                        <span id="report-label-gold">💰 獲得金幣:</span>
+                        <span id="report-label-gold"><i class="ra ra-gold-bar ra-fw" style="margin-right: 4px;"></i> 獲得金幣:</span>
                         <span style="font-weight: bold;" id="report-gold">+30G</span>
                     </div>
                     <div style="display: flex; justify-content: space-between;" id="report-hand-bonus-row">
@@ -3661,6 +3675,7 @@
             },
 
             startFairyTrial: function () {
+                this.state.battleOver = false;
                 this.state.puzzleMode = true;
                 this.state.selected = [];
                 this.state.turn = 'player';
@@ -3762,6 +3777,7 @@
             },
 
             startDragonGate: function () {
+                this.state.battleOver = false;
                 this.state.dragonGateMode = true;
                 this.state.dgRound = 1;
                 this.state.dgScore = 0;
@@ -3826,6 +3842,8 @@
 
             startBattle: function (enemyGen, fixedLevel = null) {
                 this.state.battleOver = false;
+                this.state.puzzleMode = false;
+                this.state.dragonGateMode = false;
                 // [新增] 保存敵人數據用於重試
                 this.state.lastBattleEnemy = { enemyGen, fixedLevel };
 
@@ -4291,13 +4309,13 @@
                     let mult = archMults[name] || 1.0;
                     let dmg = Math.floor(enemyAtk * mult);
 
-                    // [新增] 2. 敵人的特性效果與花色石
+                    // [修正] 敵人的特性效果：weakness 是敵人的弱點，敵人用該花色攻擊時傷害應減半
                     const usedSuits = cards.map(c => c.suit).filter(s => s !== 'j' && s !== 'JO');
                     if (this.state.enemy && this.state.enemy.trait && usedSuits.includes(this.state.enemy.trait.suit)) {
                         if (this.state.enemy.trait.type === 'immune') {
-                            dmg = 0;
-                        } else if (this.state.enemy.trait.type === 'weakness') {
                             dmg = Math.floor(dmg * 1.5);
+                        } else if (this.state.enemy.trait.type === 'weakness') {
+                            dmg = Math.floor(dmg * 0.5);
                         }
                     }
                     return { name: name, dmg: dmg };
@@ -4363,7 +4381,18 @@
             renderUI: function () {
                 const f = this.state.field;
                 document.getElementById('deck-count').innerText = this.state.deck.length;
-                document.getElementById('field-icon').innerText = f.icon;
+                const fieldIconEl = document.getElementById('field-icon');
+                if (f.icon === '🌫️' || f.icon === '🌫') {
+                    fieldIconEl.innerHTML = '<i class="ra ra-poison-cloud"></i>';
+                } else if (f.icon === '🌵') {
+                    fieldIconEl.innerHTML = '<i class="ra ra-thorny-vine"></i>';
+                } else if (f.icon === '⚓') {
+                    fieldIconEl.innerHTML = '<i class="ra ra-anchor"></i>';
+                } else if (f.icon === '🌀') {
+                    fieldIconEl.innerHTML = '<i class="ra ra-lightning-storm"></i>';
+                } else {
+                    fieldIconEl.innerText = f.icon;
+                }
                 document.getElementById('field-rate').innerText = f.rate + 'x';
 
                 // [新增] 渲染金幣
@@ -4740,7 +4769,7 @@
                 let relicHtml = Object.values(groupedRelics).length > 0
                     ? Object.values(groupedRelics).map(r => `
                         <span class="end-relic">
-                            ${r.icon}
+                            ${r.icon && r.icon.startsWith('ra-') ? `<i class="ra ${r.icon}"></i>` : r.icon}
                             ${r.count > 1 ? `<span class="relic-count">x${r.count}</span>` : ''}
                         </span>
                     `).join('')
@@ -4853,7 +4882,7 @@
                 
                 // 翻譯標籤 (Bilingual labels)
                 document.getElementById('report-title-text').innerText = USER_LANG === 'zh' ? '📊 戰鬥結算報告' : '📊 BATTLE REPORT';
-                document.getElementById('report-label-gold').innerText = USER_LANG === 'zh' ? '💰 獲得金幣:' : '💰 Gold Earned:';
+                document.getElementById('report-label-gold').innerHTML = USER_LANG === 'zh' ? '<i class="ra ra-gold-bar ra-fw"></i> 獲得金幣:' : '<i class="ra ra-gold-bar ra-fw"></i> Gold Earned:';
                 document.getElementById('report-label-bonus').innerText = USER_LANG === 'zh' ? '🎴 牌型加成:' : '🎴 Hand Bonus:';
                 document.getElementById('report-label-dmg').innerText = USER_LANG === 'zh' ? '⚔️ 總傷害:' : '⚔️ Total Damage:';
                 document.getElementById('report-label-avg').innerText = USER_LANG === 'zh' ? '⚡ 平均每回傷害:' : '⚡ Avg DMG/Turn:';
@@ -4882,7 +4911,8 @@
                     // [翻譯] 道具名稱與描述
                     const stars = '★'.repeat(relic.rarity || 1);
                     // [優化] 為道具圖示添加方框，確保顯示一致性
-                    el.innerHTML = `<div class="reward-item-frame"><div style="font-size:36px">${relic.icon}</div></div><div style="font-weight:bold; margin:5px 0;">${T(relic.name)} <span class="relic-stars">${stars}</span></div><div style="font-size:12px;">${T(relic.desc)}</div>`;
+                    const relicIconHtml = relic.icon && relic.icon.startsWith('ra-') ? `<i class="ra ${relic.icon}"></i>` : relic.icon;
+                    el.innerHTML = `<div class="reward-item-frame"><div style="font-size:36px">${relicIconHtml}</div></div><div style="font-weight:bold; margin:5px 0;">${T(relic.name)} <span class="relic-stars">${stars}</span></div><div style="font-size:12px;">${T(relic.desc)}</div>`;
                     el.onclick = () => this.pickReward(relic, el); div.appendChild(el);
                 });
             },
@@ -4936,7 +4966,11 @@
                         }, { once: true });
                     }
 
-                    icon.innerText = r.icon;
+                    if (r.icon && r.icon.startsWith('ra-')) {
+                        icon.innerHTML = `<i class="ra ${r.icon}"></i>`;
+                    } else {
+                        icon.innerText = r.icon;
+                    }
 
                     // [新增] 顯示疊加數量
                     if (r.count > 1) {
@@ -5151,9 +5185,10 @@
                             item.style.marginBottom = "8px";
                             item.style.borderBottom = "1px dashed #ccc";
                             item.style.paddingBottom = "4px";
+                            const relicIconHtml = r.icon && r.icon.startsWith('ra-') ? `<i class="ra ${r.icon}"></i>` : r.icon;
                             item.innerHTML = `
                                 <div style="display:flex; align-items:center; gap:8px;">
-                                    <span style="font-size:18px">${r.icon}</span> 
+                                    <span style="font-size:18px; display:inline-flex; align-items:center; justify-content:center;">${relicIconHtml}</span> 
                                     <b>${T(r.name)}</b> 
                                     ${r.count > 1 ? `<span class="tag" style="padding:0 4px; font-size:10px;">x${r.count}</span>` : ''}
                                     <span class="relic-stars" style="margin-left:auto;">${stars}</span>
@@ -5446,33 +5481,33 @@
         // [2] 道具清單 (Relics) - 雙語化
         // 注意：name 和 desc 改成了 {en:..., zh:...} 物件
         C_RELICS = [
-            { id: 'r_chip', name: { en: 'Stone', zh: '能量石' }, icon: '♦', desc: { en: '+20 Chips', zh: '+20 籌碼' }, effect: { chip: 20 }, rarity: 1 },
-            { id: 'r_mult', name: { en: 'Joker', zh: '鬼牌' }, icon: '★', desc: { en: '+4 Mult', zh: '+4 倍率' }, effect: { mult: 4 }, rarity: 1 },
-            { id: 'r_disc', name: { en: 'Dice', zh: '骰子' }, icon: '↺', desc: { en: '+1 Discard', zh: '+1 棄牌數' }, effect: { disc: 1 }, rarity: 1 },
-            { id: 'r_hp', name: { en: 'Ankh', zh: '十字架' }, icon: '♥', desc: { en: '+30 HP', zh: '+30 生命' }, effect: { hp: 30 }, rarity: 1 },
-            { id: 'r_amulet', name: { en: 'Gem', zh: '寶石' }, icon: '◎', desc: { en: '+10 Chips', zh: '+10 籌碼' }, effect: { chip: 10 }, rarity: 1 },
-            { id: 'r_hook', name: { en: 'Hook', zh: '毒勾' }, icon: 'ψ', desc: { en: 'Discard Dmg', zh: '棄牌造成傷害' }, effect: { special: 'hook' }, rarity: 2 },
-            { id: 'r_helm', name: { en: 'Helm', zh: '頭盔' }, icon: '🛡', desc: { en: '-10 Def', zh: '-10 受傷減免' }, effect: { flat_def: 10 }, rarity: 2 },
-            { id: 'r_band', name: { en: 'Band', zh: '繃帶' }, icon: '✚', desc: { en: 'Regen 5', zh: '每回合回血 5' }, effect: { regen: 5 }, rarity: 2 },
-            { id: 'r_gene', name: { en: 'Gene', zh: '基因' }, icon: '§', desc: { en: 'No Pair Dmg', zh: '免疫「一對」傷害' }, effect: { immune_pair: true }, rarity: 3 },
-            { id: 'r_boot', name: { en: 'Boot', zh: '飛靴' }, icon: '»', desc: { en: '10% Dodge', zh: '10% 閃避率' }, effect: { dodge: 0.1 }, rarity: 2 },
+            { id: 'r_chip', name: { en: 'Stone', zh: '能量石' }, icon: 'ra-rune-stone', desc: { en: '+20 Chips', zh: '+20 籌碼' }, effect: { chip: 20 }, rarity: 1 },
+            { id: 'r_mult', name: { en: 'Joker', zh: '鬼牌' }, icon: 'ra-arcane-mask', desc: { en: '+4 Mult', zh: '+4 倍率' }, effect: { mult: 4 }, rarity: 1 },
+            { id: 'r_disc', name: { en: 'Dice', zh: '骰子' }, icon: 'ra-perspective-dice-random', desc: { en: '+1 Discard', zh: '+1 棄牌數' }, effect: { disc: 1 }, rarity: 1 },
+            { id: 'r_hp', name: { en: 'Ankh', zh: '十字架' }, icon: 'ra-ankh', desc: { en: '+30 HP', zh: '+30 生命' }, effect: { hp: 30 }, rarity: 1 },
+            { id: 'r_amulet', name: { en: 'Gem', zh: '寶石' }, icon: 'ra-gem', desc: { en: '+10 Chips', zh: '+10 籌碼' }, effect: { chip: 10 }, rarity: 1 },
+            { id: 'r_hook', name: { en: 'Hook', zh: '毒勾' }, icon: 'ra-meat-hook', desc: { en: 'Discard Dmg', zh: '棄牌造成傷害' }, effect: { special: 'hook' }, rarity: 2 },
+            { id: 'r_helm', name: { en: 'Helm', zh: '頭盔' }, icon: 'ra-knight-helmet', desc: { en: '-10 Def', zh: '-10 受傷減免' }, effect: { flat_def: 10 }, rarity: 2 },
+            { id: 'r_band', name: { en: 'Band', zh: '繃帶' }, icon: 'ra-heart-bottle', desc: { en: 'Regen 5', zh: '每回合回血 5' }, effect: { regen: 5 }, rarity: 2 },
+            { id: 'r_gene', name: { en: 'Gene', zh: '基因' }, icon: 'ra-egg-pod', desc: { en: 'No Pair Dmg', zh: '免疫「一對」傷害' }, effect: { immune_pair: true }, rarity: 3 },
+            { id: 'r_boot', name: { en: 'Boot', zh: '飛靴' }, icon: 'ra-boot-stomp', desc: { en: '10% Dodge', zh: '10% 閃避率' }, effect: { dodge: 0.1 }, rarity: 2 },
             // [新增] 花色石道具 (2星) - 提升對應花色傷害
-            { id: 'r_stone_s', name: { en: '♠ Stone', zh: '♠ 黑桃石' }, icon: '♠', desc: { en: '♠ +20% DMG', zh: '♠ +20% 傷害' }, effect: { suit_boost_s: 0.2 }, rarity: 2 },
-            { id: 'r_stone_h', name: { en: '♥ Stone', zh: '♥ 紅心石' }, icon: '♥', desc: { en: '♥ +20% DMG', zh: '♥ +20% 傷害' }, effect: { suit_boost_h: 0.2 }, rarity: 2 },
-            { id: 'r_stone_d', name: { en: '♦ Stone', zh: '♦ 方塊石' }, icon: '♦', desc: { en: '♦ +20% DMG', zh: '♦ +20% 傷害' }, effect: { suit_boost_d: 0.2 }, rarity: 2 },
-            { id: 'r_stone_c', name: { en: '♣ Stone', zh: '♣ 梅花石' }, icon: '♣', desc: { en: '♣ +20% DMG', zh: '♣ +20% 傷害' }, effect: { suit_boost_c: 0.2 }, rarity: 2 },
-            { id: 'r_umb', name: { en: 'Umb', zh: '黑傘' }, icon: '☂', desc: { en: 'No Field', zh: '無視場地效果' }, effect: { ignore_field: true }, rarity: 3 },
-            { id: 'r_dice', name: { en: 'L.Dice', zh: '運氣骰' }, icon: '?', desc: { en: '+/- 15% Dmg', zh: '傷害浮動 +/-15%' }, effect: { random_dmg: 0.15 }, rarity: 3 },
-            { id: 'r_lock', name: { en: 'Lock', zh: '大鎖' }, icon: '✖', desc: { en: 'Enemy Pick-1', zh: '敵人掀牌數 -1' }, effect: { special: 'lock' }, rarity: 3 },
-            { id: 'r_bone', name: { en: 'Dog Bone', zh: '小狗骨頭' }, icon: '🦴', desc: { en: 'Dodge +5%, HP +15', zh: '閃避率 +5%, 生命值 +15' }, effect: { dodge: 0.05, hp: 15 }, rarity: 2 },
-            { id: 'r_crown', name: { en: 'Iron Crown', zh: '鐵王冠' }, icon: '👑', desc: { en: 'HP < 30% x2 DMG', zh: '生命值 < 30% 時傷害翻倍' }, effect: { special: 'crown' }, rarity: 3 },
-            { id: 'r_scroll', name: { en: 'Ancient Scroll', zh: '遠古卷軸' }, icon: '📜', desc: { en: 'Straight +50% Mult', zh: '手牌為順子時額外 +50% 倍率' }, effect: { special: 'scroll' }, rarity: 2 },
-            { id: 'r_clover', name: { en: 'Clover', zh: '四葉草' }, icon: '🍀', desc: { en: 'Dodge +5%', zh: '閃避率 +5%' }, effect: { dodge: 0.05 }, rarity: 1 },
-            { id: 'r_feather', name: { en: 'Feather', zh: '輕羽' }, icon: '🪶', desc: { en: 'Max HP +10, Mult +2', zh: '最大生命 +10，倍率 +2' }, effect: { hp: 10, mult: 2 }, rarity: 1 },
-            { id: 'r_cup', name: { en: 'Holy Grail', zh: '聖杯' }, icon: '🏆', desc: { en: 'Heal 2 HP when playing High Card or Pair', zh: '打出高牌或一對時，恢復 2 HP' }, effect: { special: 'cup' }, rarity: 2 },
-            { id: 'r_gauntlet', name: { en: 'Gauntlet', zh: '鋼鐵手套' }, icon: '🥊', desc: { en: '+15 True DMG when hand contains Club ♣', zh: '出牌包含梅花 ♣ 時，追加 +15 真實傷害' }, effect: { special: 'gauntlet' }, rarity: 2 },
-            { id: 'r_aegis', name: { en: 'Aegis', zh: '庇護之盾' }, icon: '🧿', desc: { en: 'Reduces single hit damage > 50 to 50', zh: '受到大於 50 點的單次傷害降低至 50' }, effect: { special: 'aegis' }, rarity: 3 },
-            { id: 'r_philosopher', name: { en: 'Phil. Stone', zh: '賢者之石' }, icon: '🔴', desc: { en: 'Gain 3 Gold for each discarded card', zh: '每次棄牌時，每張被棄的卡牌提供 3 金幣' }, effect: { special: 'philosopher' }, rarity: 3 }
+            { id: 'r_stone_s', name: { en: '♠ Stone', zh: '♠ 黑桃石' }, icon: 'ra-spades-card', desc: { en: '♠ +20% DMG', zh: '♠ +20% 傷害' }, effect: { suit_boost_s: 0.2 }, rarity: 2 },
+            { id: 'r_stone_h', name: { en: '♥ Stone', zh: '♥ 紅心石' }, icon: 'ra-hearts-card', desc: { en: '♥ +20% DMG', zh: '♥ +20% 傷害' }, effect: { suit_boost_h: 0.2 }, rarity: 2 },
+            { id: 'r_stone_d', name: { en: '♦ Stone', zh: '♦ 方塊石' }, icon: 'ra-diamonds-card', desc: { en: '♦ +20% DMG', zh: '♦ +20% 傷害' }, effect: { suit_boost_d: 0.2 }, rarity: 2 },
+            { id: 'r_stone_c', name: { en: '♣ Stone', zh: '♣ 梅花石' }, icon: 'ra-clovers-card', desc: { en: '♣ +20% DMG', zh: '♣ +20% 傷害' }, effect: { suit_boost_c: 0.2 }, rarity: 2 },
+            { id: 'r_umb', name: { en: 'Umb', zh: '黑傘' }, icon: 'ra-heavy-shield', desc: { en: 'No Field', zh: '無視場地效果' }, effect: { ignore_field: true }, rarity: 3 },
+            { id: 'r_dice', name: { en: 'L.Dice', zh: '運氣骰' }, icon: 'ra-perspective-dice-random', desc: { en: '+/- 15% Dmg', zh: '傷害浮動 +/-15%' }, effect: { random_dmg: 0.15 }, rarity: 3 },
+            { id: 'r_lock', name: { en: 'Lock', zh: '大鎖' }, icon: 'ra-key', desc: { en: 'Enemy Pick-1', zh: '敵人掀牌數 -1' }, effect: { special: 'lock' }, rarity: 3 },
+            { id: 'r_bone', name: { en: 'Dog Bone', zh: '小狗骨頭' }, icon: 'ra-bone-bite', desc: { en: 'Dodge +5%, HP +15', zh: '閃避率 +5%, 生命值 +15' }, effect: { dodge: 0.05, hp: 15 }, rarity: 2 },
+            { id: 'r_crown', name: { en: 'Iron Crown', zh: '鐵王冠' }, icon: 'ra-crown', desc: { en: 'HP < 30% x2 DMG', zh: '生命值 < 30% 時傷害翻倍' }, effect: { special: 'crown' }, rarity: 3 },
+            { id: 'r_scroll', name: { en: 'Ancient Scroll', zh: '遠古卷軸' }, icon: 'ra-scroll-unfurled', desc: { en: 'Straight +50% Mult', zh: '手牌為順子時額外 +50% 倍率' }, effect: { special: 'scroll' }, rarity: 2 },
+            { id: 'r_clover', name: { en: 'Clover', zh: '四葉草' }, icon: 'ra-clover', desc: { en: 'Dodge +5%', zh: '閃避率 +5%' }, effect: { dodge: 0.05 }, rarity: 1 },
+            { id: 'r_feather', name: { en: 'Feather', zh: '輕羽' }, icon: 'ra-feather-wing', desc: { en: 'Max HP +10, Mult +2', zh: '最大生命 +10，倍率 +2' }, effect: { hp: 10, mult: 2 }, rarity: 1 },
+            { id: 'r_cup', name: { en: 'Holy Grail', zh: '聖杯' }, icon: 'ra-glass-heart', desc: { en: 'Heal 2 HP when playing High Card or Pair', zh: '打出高牌或一對時，恢復 2 HP' }, effect: { special: 'cup' }, rarity: 2 },
+            { id: 'r_gauntlet', name: { en: 'Gauntlet', zh: '鋼鐵手套' }, icon: 'ra-hand', desc: { en: '+15 True DMG when hand contains Club ♣', zh: '出牌包含梅花 ♣ 時，追加 +15 真實傷害' }, effect: { special: 'gauntlet' }, rarity: 2 },
+            { id: 'r_aegis', name: { en: 'Aegis', zh: '庇護之盾' }, icon: 'ra-shield', desc: { en: 'Reduces single hit damage > 50 to 50', zh: '受到大於 50 點的單次傷害降低至 50' }, effect: { special: 'aegis' }, rarity: 3 },
+            { id: 'r_philosopher', name: { en: 'Phil. Stone', zh: '賢者之石' }, icon: 'ra-crystals', desc: { en: 'Gain 3 Gold for each discarded card', zh: '每次棄牌時，每張被棄的卡牌提供 3 金幣' }, effect: { special: 'philosopher' }, rarity: 3 }
         ];
 
         // [3] 怪物名稱 (Monster Names) - 雙語化
@@ -5672,7 +5707,7 @@
                 text: { en: 'A merchant in a dark hood calls you over: "Hey kid... want a special key? Only 40 gold!"', zh: '一位身披兜帽的神秘商人向你招手：「嘿……想要一把特別的鑰匙嗎？只要 40 金幣！」' },
                 choices: [
                     { text: { en: 'Buy Key (-40G)', zh: '花費 40G 購買鑰匙' }, type: 'buy_key', res: { en: 'He hands you a heavy, gold-engraved key with a grin.', zh: '他咧嘴一笑，遞給了你一把沉甸甸的金雕古鑰。' } },
-                    { text: { en: 'Refuse', zh: '拒絕他' }, type: 'leave', res: { en: 'He grunts and vanishes into the shadows.', zh: 'He grunts and vanishes into the shadows.' } }
+                    { text: { en: 'Refuse', zh: '拒絕他' }, type: 'leave', res: { en: 'He grunts and vanishes into the shadows.', zh: '他不滿地哼了一聲，消失在陰影中。' } }
                 ]
             },
             {
@@ -5779,8 +5814,8 @@
                 enemy: {
                     name: { en: "Palace Guard", zh: "皇宮守衛" },
                     kao: "🛡️(ò_ó)⚔️",
-                    hp: 300, maxHp: 300, atk: 15, cd: 3, // [修正] 攻擊力調降
-                    ai: 'High'
+                    hp: 300, maxHp: 300, atk: 15, cd: 3, maxCd: 3,
+                    ai: 'High', isElite: false, skill: null, trait: null
                 },
                 // 設定獎勵類型：'random' (隨機三選一) 或 'fixed' (指定道具)
                 rewardType: 'fixed',

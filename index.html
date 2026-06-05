@@ -3925,6 +3925,14 @@
                     // [新增] 記錄鉤子傷害到統計
                     this.state.battleStats.totalDamage += dmg;
                 } else this.msg(T('MSG_DISCARD'));
+
+                // [新增] 賢者之石 (r_philosopher) 棄牌獲得金幣效果
+                if (this.hasRelic('r_philosopher')) {
+                    const goldGained = discardedIndices.length * 3;
+                    this.state.gold += goldGained;
+                    this.msg(USER_LANG === 'zh' ? `🔴 賢者之石：獲得了 ${goldGained} 金幣！` : `🔴 Philosopher's Stone: Gained ${goldGained} Gold!`);
+                }
+
                 discardedIndices.forEach(idx => this.state.table[idx] = null);
                 this.state.discLeft--;
                 this.state.battleStats.discardsUsed++; // [新增] 記錄棄牌次數
@@ -4007,6 +4015,12 @@
                 if (this.hasRelic('r_dice')) dmg = Math.floor(dmg * (Math.random() < 0.5 ? 1.15 : 0.85));
                 if (BuffSys.isWeak()) dmg = Math.floor(dmg * 0.5);
 
+                // [新增] 鋼鐵手套 (r_gauntlet) 包含梅花時追加傷害
+                if (this.hasRelic('r_gauntlet') && cards.some(c => c && c.suit === 'c')) {
+                    dmg += 15;
+                    this.msg(USER_LANG === 'zh' ? `🥊 鋼鐵手套：追加了 15 點傷害！` : `🥊 Gauntlet: +15 DMG!`);
+                }
+
                 // [新增] 迴聲光環追加 20 點真實傷害
                 if (this.state.auras.echo) {
                     dmg += 20;
@@ -4049,6 +4063,14 @@
                         }
                     }
                 });
+
+                // [新增] 聖杯 (r_cup) 打出高牌或一對時回復生命值
+                if (this.hasRelic('r_cup') && (res.name === 'High Card' || res.name === 'Pair')) {
+                    const healVal = 2;
+                    this.state.p_hp = Math.min(this.state.p_max, this.state.p_hp + healVal);
+                    this.msg(USER_LANG === 'zh' ? `🏆 聖杯祈福：回復了 ${healVal} 點生命值！` : `🏆 Holy Grail: Healed ${healVal} HP!`);
+                    this.showDamagePopup(healVal, 'p-kao', { isHeal: true });
+                }
 
                 this.state.selected.forEach(idx => this.state.table[idx] = null);
                 this.state.selected = []; BuffSys.tick(); this.renderUI(); await Utils.delay(1000);
@@ -4121,6 +4143,13 @@
                 else if (Math.random() < dodgeChance) { dmg = 0; this.msg(T('MSG_DODGE')); this.showDamagePopup(0, 'p-kao', { text: 'DODGE!' }); }
                 else {
                     if (this.hasRelic('r_helm')) dmg = Math.max(0, dmg - 10);
+
+                    // [新增] 庇護之盾 (r_aegis) 單次傷害上限 50
+                    if (this.hasRelic('r_aegis') && dmg > 50) {
+                        dmg = 50;
+                        this.msg(USER_LANG === 'zh' ? `🧿 庇護之盾：將傷害降至 50 點！` : `🧿 Aegis Shield: Capped damage to 50!`);
+                    }
+
                     this.state.p_hp = Math.max(0, this.state.p_hp - dmg);
                     let sLog = this.triggerEnemySkill(); this.msg(`${T(this.state.enemy.name)}: ${T(HAND_KEY_MAP[res.name]) || res.name} (${dmg})${sLog}`);
                     this.showDamagePopup(dmg, 'p-kao');
@@ -5428,7 +5457,13 @@
             { id: 'r_lock', name: { en: 'Lock', zh: '大鎖' }, icon: '✖', desc: { en: 'Enemy Pick-1', zh: '敵人掀牌數 -1' }, effect: { special: 'lock' }, rarity: 3 },
             { id: 'r_bone', name: { en: 'Dog Bone', zh: '小狗骨頭' }, icon: '🦴', desc: { en: 'Dodge +5%, HP +15', zh: '閃避率 +5%, 生命值 +15' }, effect: { dodge: 0.05, hp: 15 }, rarity: 2 },
             { id: 'r_crown', name: { en: 'Iron Crown', zh: '鐵王冠' }, icon: '👑', desc: { en: 'HP < 30% x2 DMG', zh: '生命值 < 30% 時傷害翻倍' }, effect: { special: 'crown' }, rarity: 3 },
-            { id: 'r_scroll', name: { en: 'Ancient Scroll', zh: '遠古卷軸' }, icon: '📜', desc: { en: 'Straight +50% Mult', zh: '手牌為順子時額外 +50% 倍率' }, effect: { special: 'scroll' }, rarity: 2 }
+            { id: 'r_scroll', name: { en: 'Ancient Scroll', zh: '遠古卷軸' }, icon: '📜', desc: { en: 'Straight +50% Mult', zh: '手牌為順子時額外 +50% 倍率' }, effect: { special: 'scroll' }, rarity: 2 },
+            { id: 'r_clover', name: { en: 'Clover', zh: '四葉草' }, icon: '🍀', desc: { en: 'Dodge +5%', zh: '閃避率 +5%' }, effect: { dodge: 0.05 }, rarity: 1 },
+            { id: 'r_feather', name: { en: 'Feather', zh: '輕羽' }, icon: '🪶', desc: { en: 'Max HP +10, Mult +2', zh: '最大生命 +10，倍率 +2' }, effect: { hp: 10, mult: 2 }, rarity: 1 },
+            { id: 'r_cup', name: { en: 'Holy Grail', zh: '聖杯' }, icon: '🏆', desc: { en: 'Heal 2 HP when playing High Card or Pair', zh: '打出高牌或一對時，恢復 2 HP' }, effect: { special: 'cup' }, rarity: 2 },
+            { id: 'r_gauntlet', name: { en: 'Gauntlet', zh: '鋼鐵手套' }, icon: '🥊', desc: { en: '+15 True DMG when hand contains Club ♣', zh: '出牌包含梅花 ♣ 時，追加 +15 真實傷害' }, effect: { special: 'gauntlet' }, rarity: 2 },
+            { id: 'r_aegis', name: { en: 'Aegis', zh: '庇護之盾' }, icon: '🧿', desc: { en: 'Reduces single hit damage > 50 to 50', zh: '受到大於 50 點的單次傷害降低至 50' }, effect: { special: 'aegis' }, rarity: 3 },
+            { id: 'r_philosopher', name: { en: 'Phil. Stone', zh: '賢者之石' }, icon: '🔴', desc: { en: 'Gain 3 Gold for each discarded card', zh: '每次棄牌時，每張被棄的卡牌提供 3 金幣' }, effect: { special: 'philosopher' }, rarity: 3 }
         ];
 
         // [3] 怪物名稱 (Monster Names) - 雙語化

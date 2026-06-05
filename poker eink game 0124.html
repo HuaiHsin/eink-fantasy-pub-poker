@@ -2617,12 +2617,8 @@
             pick: arr => arr[Math.floor(Math.random() * arr.length)],
             // [新增] 基於權重的隨機選擇
             weightedPick: (arr) => {
-                // 如果沒有權重屬性，退回到普通隨機
-                if (!arr[0] || arr[0].weight === undefined) {
-                    return Utils.pick(arr);
-                }
-
-                // 計算總權重
+                if (!arr || arr.length === 0) return null;
+                // 計算總權重 (未定義權重的元素預設權重為 1.0)
                 const totalWeight = arr.reduce((sum, item) => sum + (item.weight || 1.0), 0);
 
                 // 隨機選擇

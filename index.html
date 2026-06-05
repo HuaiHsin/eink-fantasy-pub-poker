@@ -3468,6 +3468,93 @@
                         setTimeout(() => this.startBattle(enemy), 1500);
                         return;
                     }
+                    case 'gambler_bet_30': {
+                        if (this.state.gold < 30) {
+                            msg = USER_LANG === 'zh' ? "你沒有足夠的金幣！" : "You do not have enough gold!";
+                        } else {
+                            if (Math.random() < 0.5) {
+                                this.state.gold += 30;
+                                msg = USER_LANG === 'zh' ? "贏了！你贏回了 30 金幣！" : "You won! You gained 30 gold!";
+                            } else {
+                                this.state.gold = Math.max(0, this.state.gold - 30);
+                                msg = USER_LANG === 'zh' ? "輸了！你失去了 30 金幣。" : "You lost! You lost 30 gold.";
+                            }
+                        }
+                        break;
+                    }
+                    case 'gambler_bet_relic': {
+                        if (this.state.relics.length === 0) {
+                            msg = USER_LANG === 'zh' ? "你身上沒有任何遺物可以下注！" : "You have no relics to wager!";
+                        } else {
+                            const lost = this.state.relics.pop();
+                            if (Math.random() < 0.5) {
+                                this.addRandomRelic();
+                                this.addRandomRelic();
+                                msg = USER_LANG === 'zh' ? `贏了！你輸掉了 [${T(lost.name)}]，但贏得了另外兩個遺物！` : `You won! You lost [${T(lost.name)}] but won two new relics!`;
+                            } else {
+                                msg = USER_LANG === 'zh' ? `輸了！你失去了遺物 [${T(lost.name)}]。` : `You lost! You lost your relic: [${T(lost.name)}].`;
+                            }
+                        }
+                        break;
+                    }
+                    case 'fountain_gold': {
+                        if (this.state.gold < 15) {
+                            msg = USER_LANG === 'zh' ? "你沒有足夠的金幣！" : "You do not have enough gold!";
+                        } else {
+                            this.state.gold = Math.max(0, this.state.gold - 15);
+                            if (Math.random() < 0.7) {
+                                this.state.baseMaxHp += 15;
+                                this.state.p_max += 15;
+                                this.state.p_hp = this.state.p_max;
+                                msg = USER_LANG === 'zh' ? "金幣在泉水中閃爍。你的最大生命值增加了 15 點並回復滿生命值！" : "The coin shimmers in the water. Your Max HP increased by 15 and you are fully healed!";
+                            } else {
+                                this.addRandomRelic();
+                                const relic = this.state.relics[this.state.relics.length - 1];
+                                msg = USER_LANG === 'zh' ? `噴泉中浮現出一個閃耀的寶物：[${T(relic.name)}]！` : `A shining relic floats up from the fountain: [${T(relic.name)}]!`;
+                            }
+                        }
+                        break;
+                    }
+                    case 'fountain_drink': {
+                        if (Math.random() < 0.6) {
+                            const healVal = 40;
+                            this.state.p_hp = Math.min(this.state.p_max, this.state.p_hp + healVal);
+                            msg = USER_LANG === 'zh' ? `清甜的泉水滋潤了你。你回復了 40 生命值。` : `The sweet water rejuvenates you. You healed 40 HP.`;
+                            this.showDamagePopup(healVal, 'p-kao', { isHeal: true });
+                        } else {
+                            this.state.p_hp = Math.max(0, this.state.p_hp - 10);
+                            BuffSys.add('weak', null, 3, 'WEAK');
+                            msg = USER_LANG === 'zh' ? `咳咳！水裡有毒！你損失了 10 生命值並感到渾身無力（虛弱 3 回合）。` : `Cough! The water was tainted! You lost 10 HP and feel weak (Weakened for 3 turns).`;
+                            this.showDamagePopup(10, 'p-kao');
+                        }
+                        break;
+                    }
+                    case 'magician_guess': {
+                        const suits = ['s', 'h', 'd', 'c'];
+                        const correctSuit = Utils.pick(suits);
+                        const suitNames = {
+                            s: { en: 'Spade ♠', zh: '黑桃 ♠' },
+                            h: { en: 'Heart ♥', zh: '紅心 ♥' },
+                            d: { en: 'Diamond ♦', zh: '方塊 ♦' },
+                            c: { en: 'Club ♣', zh: '梅花 ♣' }
+                        };
+                        const isCorrect = choice.val === correctSuit;
+                        if (isCorrect) {
+                            if (!this.state.customDeck) this.state.customDeck = this.createBaseDeck();
+                            const customId = this.state.customDeck.length ? Math.max(...this.state.customDeck.map(c => c.id)) + 1 : 1;
+                            this.state.customDeck.push({ suit: 'j', rank: 'JO', val: 15, id: customId, enchant: null });
+                            msg = USER_LANG === 'zh' ? 
+                                `恭喜你猜對了！魔術師從帽子裡抽出了【${T(suitNames[correctSuit])}】。作為獎勵，他將一張萬能鬼牌 (Joker) 塞入了你的牌組！` : 
+                                `Congratulations, you guessed it! The magician pulled out the [${T(suitNames[correctSuit])}] from his hat. As a reward, he added a Joker card to your deck!`;
+                        } else {
+                            this.state.p_hp = Math.max(0, this.state.p_hp - 15);
+                            msg = USER_LANG === 'zh' ? 
+                                `猜錯了！魔術師翻開的牌是【${T(suitNames[correctSuit])}】。帽子裡飛出了一隻咬人的鴿子，讓你損失了 15 HP！` : 
+                                `Wrong guess! The magician revealed the [${T(suitNames[correctSuit])}]. A biting pigeon flew out of the hat, costing you 15 HP!`;
+                            this.showDamagePopup(15, 'p-kao');
+                        }
+                        break;
+                    }
                     case 'dragon_gate':
                         this.startDragonGate(); return;
                     case 'puzzle':
@@ -5554,6 +5641,45 @@
                 choices: [
                     { text: { en: 'Use Merchant\'s Key (Unlock 3-Star Relic)', zh: '使用神秘鑰匙 (開出3星傳奇遺物)' }, type: 'use_key', res: { en: 'Click! The padlock snaps open! You find an legendary artifact inside!', zh: '咔噠！掛鎖應聲落鎖！你在箱子裡找到了一個稀有的傳奇遺物！' } },
                     { text: { en: 'Leave it', zh: '直接離開' }, type: 'leave', res: { en: 'You walk away, leaving the treasure behind.', zh: '你轉身走開，留下了寶藏。' } }
+                ]
+            },
+            {
+                id: 'e_gambler',
+                name: { en: 'Wandering Gambler', zh: '流浪賭徒' },
+                kao: '(⌐■_■)♣',
+                text: { en: 'A mysterious gambler sits at a roadside table shuffling cards. "Care for a wager, traveler? High card wins. Double your gold, or lose it all!"', zh: '一位身披風衣的神秘賭徒正坐在路邊的小木桌旁洗牌：「嘿旅人，要來一把局外博弈嗎？點數大者勝。雙倍金幣返還，或者全部輸光！」' },
+                choices: [
+                    { text: { en: 'Bet 30 Gold (-30G, 50% Win/Loss)', zh: '下注 30 金幣 (-30G, 50% 勝率)' }, type: 'gambler_bet_30', res: '' },
+                    { text: { en: 'Bet a Relic (50% Double/Loss)', zh: '下注一件遺物 (50% 翻倍/失去)' }, type: 'gambler_bet_relic', res: '' },
+                    { text: { en: 'Decline', zh: '拒絕' }, type: 'leave', res: { en: 'The gambler shrugs and continues shuffling his cards.', zh: '賭徒聳了聳肩，繼續漫不經心地洗牌。' } }
+                ]
+            },
+            {
+                id: 'e_fountain',
+                name: { en: 'Wishing Fountain', zh: '許願噴泉' },
+                kao: '⛲',
+                text: { en: 'You discover a beautiful, glowing fountain hidden in a tranquil clearing. The water looks pure and magical.', zh: '你發現了一座隱藏在寧靜空地中的美麗噴泉。泉水散發著淡雅的微光，蘊含著神妙的魔力。' },
+                choices: [
+                    { text: { en: 'Throw 15 Gold (-15G, Buff Max HP or get Relic)', zh: '投擲 15 金幣 (-15G, 提升上限或得遺物)' }, type: 'fountain_gold', res: '' },
+                    { text: { en: 'Drink from it (60% Heal / 40% Weakness)', zh: '直接飲用泉水 (60% 回血 / 40% 虛弱)' }, type: 'fountain_drink', res: '' },
+                    { text: { en: 'Walk away', zh: '離開' }, type: 'leave', res: { en: 'You turn around and leave the fountain behind.', zh: '你轉身離去，泉水在身後漸漸平靜。' } }
+                ]
+            },
+            {
+                id: 'e_magician',
+                name: { en: 'Card Magician', zh: '卡牌魔術師' },
+                kao: '🎩(≖ᴗ≖✿)',
+                dialogue: [
+                    { speaker: 'npc', text: { en: 'Step right up! Want to see a card trick?', zh: '瞧一瞧看一看！想看個驚人的卡牌魔術嗎？' } },
+                    { speaker: 'player', text: { en: 'Sure, how does it work?', zh: '好啊，怎麼玩？' } },
+                    { speaker: 'npc', text: { en: 'Guess the suit of the card in my hat! Get it right and win a Joker. Get it wrong... well, my helper pigeon might get cranky!', zh: '猜猜我帽子裡的牌是什麼花色！猜對了送你一張萬能鬼牌 (Joker)，猜錯了……我的助手鴿子脾氣可不太好喔！' } }
+                ],
+                choices: [
+                    { text: { en: '♠ Spade', zh: '♠ 黑桃' }, type: 'magician_guess', val: 's', res: '' },
+                    { text: { en: '♥ Heart', zh: '♥ 紅心' }, type: 'magician_guess', val: 'h', res: '' },
+                    { text: { en: '♦ Diamond', zh: '♦ 方塊' }, type: 'magician_guess', val: 'd', res: '' },
+                    { text: { en: '♣ Club', zh: '♣ 梅花' }, type: 'magician_guess', val: 'c', res: '' },
+                    { text: { en: 'Decline', zh: '拒絕' }, type: 'leave', res: { en: 'The magician shrugs and packs up his cards.', zh: '魔術師無奈地攤了攤手，把卡牌收了起來。' } }
                 ]
             }
         ];

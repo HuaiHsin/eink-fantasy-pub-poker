@@ -2322,9 +2322,9 @@
     </div>
     <div id="modal-event-result" class="modal hidden">
         <div class="modal-box">
-            <h3 style="border-bottom: 2px solid black; margin-bottom: 10px;">RESULT</h3>
+            <h3 id="event-result-title" style="border-bottom: 2px solid black; margin-bottom: 10px;">RESULT</h3>
             <div id="event-result-msg" style="font-size: 14px; line-height: 1.6; margin-bottom: 20px;"></div>
-            <button class="game-btn" onclick="Game.confirmEventResult()">CONTINUE</button>
+            <button id="event-result-btn" class="game-btn" onclick="Game.confirmEventResult()">CONTINUE</button>
         </div>
     </div>
     <div id="modal-gameover" class="modal hidden">
@@ -2469,6 +2469,8 @@
 
         // 3. 介面文字字典
         const C_TEXT = {
+            RESULT: { en: "RESULT", zh: "結果" },
+            CONTINUE: { en: "CONTINUE", zh: "繼續" },
             TITLE_SUB: { en: "Config Edition", zh: "E-ink Edition" },
             BTN_START: { en: "START ADVENTURE", zh: "開始冒險" },
             BTN_DEBUG: { en: "🚧 DEBUG: SKIP TUTORIAL", zh: "🚧 測試：跳過教學" },
@@ -3681,7 +3683,14 @@
                 this.showEventResult(msg);
             },
 
-            showEventResult: function (text) { document.getElementById('event-result-msg').innerText = text; document.getElementById('modal-event-result').classList.remove('hidden'); },
+            showEventResult: function (text) {
+                const titleEl = document.getElementById('event-result-title');
+                if (titleEl) titleEl.innerText = T('RESULT');
+                const btnEl = document.getElementById('event-result-btn');
+                if (btnEl) btnEl.innerText = T('CONTINUE');
+                document.getElementById('event-result-msg').innerText = text;
+                document.getElementById('modal-event-result').classList.remove('hidden');
+            },
 
             addRandomRelic: function () { let pool = C_RELICS; this.state.relics.push(pool[Utils.randInt(0, pool.length - 1)]); this.updateMaxHp(); },
 

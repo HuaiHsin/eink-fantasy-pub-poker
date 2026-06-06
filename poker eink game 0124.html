@@ -171,6 +171,23 @@
         #scene-map {
             padding: 20px;
             background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIklEQVQIW2NkQAXYwJABAAAA7AAB7G1s2AAAAABJRU5ErkJggg==');
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #scene-shop {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        #scene-reward {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .wanted-poster {
@@ -480,11 +497,11 @@
 
         .puzzle-card .rank-txt,
         .puzzle-card .rank-bot {
-            font-size: 13px !important;
+            font-size: 16px !important;
         }
 
         .puzzle-card .suit-big {
-            font-size: 24px !important;
+            font-size: 28px !important;
         }
 
         /* 射龍門專用大牌 */
@@ -499,12 +516,12 @@
 
         .dragon-gate-card .rank-txt,
         .dragon-gate-card .rank-bot {
-            font-size: 18px !important;
+            font-size: 22px !important;
             font-weight: 900;
         }
 
         .dragon-gate-card .suit-big {
-            font-size: 38px !important;
+            font-size: 44px !important;
         }
 
         .dragon-gate-cards {
@@ -566,8 +583,8 @@
                 radial-gradient(#bbb 1px, transparent 1px);
             background-size: 10px 10px;
             background-position: 0 0, 5px 5px;
-            padding: 10px 10px 0 10px;
-            border-top: 2px solid #999;
+            padding: 10px 10px 10px 10px;
+            border-top: 3px solid black;
         }
 
         /* === [新增] 狀態標籤與欄位自動摺疊，緊湊版面 === */
@@ -725,7 +742,7 @@
         }
 
         .suit-big {
-            font-size: 32px;
+            font-size: 38px;
             position: absolute;
             top: 50%;
             left: 50%;
@@ -733,7 +750,7 @@
         }
 
         .rank-txt {
-            font-size: 16px;
+            font-size: 22px;
             font-weight: 900;
             position: absolute;
             top: 2px;
@@ -741,7 +758,7 @@
         }
 
         .rank-bot {
-            font-size: 16px;
+            font-size: 22px;
             font-weight: 900;
             position: absolute;
             bottom: 2px;
@@ -847,7 +864,7 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            flex: 1;
             background: #fffaf0;
         }
 
@@ -1900,10 +1917,10 @@
                 transform: none !important;
             }
             .suit-big {
-                font-size: 24px;
+                font-size: 28px;
             }
             .rank-txt, .rank-bot {
-                font-size: 12px;
+                font-size: 16px;
             }
             .zone-player {
                 padding: 6px 6px 0 6px;
@@ -1988,10 +2005,10 @@
                 gap: 2px;
             }
             .suit-big {
-                font-size: 18px;
+                font-size: 22px;
             }
             .rank-txt, .rank-bot {
-                font-size: 10px;
+                font-size: 13px;
             }
             .zone-player {
                 padding: 4px 4px 0 4px;
@@ -2163,11 +2180,6 @@
             <span>關卡 <span id="map-stage">1</span></span>
         </div>
         <div id="map-choices" style="padding: 10px;"></div>
-        <!-- 玩家資訊列區塊 -->
-        <div class="player-info-bar" style="margin-top: 20px; display: flex; align-items: center; border: 2px solid black; background: white; padding: 10px; gap: 15px; box-shadow: 3px 3px 0px #ccc;">
-            <div style="font-size: 18px; font-weight: bold; white-space: nowrap; border-right: 2px solid black; padding-right: 15px; display: flex; align-items: center;"><i class="ra ra-gold-bar ra-fw" style="margin-right: 4px;"></i> <span id="map-gold" style="margin-left: 5px;">0</span>G</div>
-            <div class="relic-bar" id="map-relics" style="flex: 1; display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-start; margin: 0; min-height: auto;"></div>
-        </div>
     </div>
 
     <div id="scene-event" class="hidden">
@@ -2214,26 +2226,6 @@
 
             <div class="card-area" id="card-container"></div>
         </div>
-        <div class="zone-player">
-            <div class="hud-row" style="align-items: center; gap: 10px; margin-bottom: 6px; justify-content: flex-start;">
-                <div class="kao" id="p-kao"></div>
-                <!-- 金幣資訊列 -->
-                <div class="player-gold-bar" style="border: 2px solid black; background: white; padding: 4px 10px; display: flex; align-items: center; height: 32px; box-sizing: border-box; box-shadow: 2px 2px 0px #ccc;">
-                    <span style="font-size: 15px; font-weight: bold; display: flex; align-items: center;"><i class="ra ra-gold-bar ra-fw" style="margin-right: 4px;"></i> <span id="battle-gold" style="margin-left: 3px;">0</span>G</span>
-                </div>
-            </div>
-            <!-- 遺物道具列區塊（單獨佔用整行，空間極其充裕） -->
-            <div class="player-relics-bar" style="border: 2px solid black; background: white; padding: 4px 8px; margin-bottom: 6px; box-shadow: 2px 2px 0px #ccc; display: flex; align-items: center; min-height: 32px; box-sizing: border-box; gap: 8px;">
-                <div style="font-size: 12px; font-weight: bold; border-right: 2px solid black; padding-right: 8px; white-space: nowrap; height: 100%; display: flex; align-items: center;" id="battle-relics-label">🎒 道具</div>
-                <div class="relic-bar" id="battle-relics" style="flex: 1; display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-start; margin: 0; min-height: auto;"></div>
-            </div>
-            <div class="tag-row" id="p-buffs" style="justify-content: flex-start;"></div>
-            <div class="tag-row" id="p-auras" style="justify-content: flex-start; margin-bottom: 4px;"></div>
-            <div class="hp-frame" style="margin-bottom: 10px;">
-                <div class="hp-fill" id="p-hp-bar"></div>
-                <div class="hp-text" id="p-hp-txt"></div>
-            </div>
-        </div>
         <div class="btn-group">
             <button class="game-btn" id="btn-discard" onclick="Game.onDiscard()"
                 style="background:#fff0f0;">DISCARD</button>
@@ -2256,7 +2248,7 @@
     </div>
 
     <div id="scene-reward" class="hidden">
-        <div style="padding: 15px; text-align: center; display: flex; flex-direction: column; min-height: 100vh; box-sizing: border-box; justify-content: flex-start; align-items: center; background: #fffaf0;">
+        <div style="padding: 15px; text-align: center; display: flex; flex-direction: column; flex: 1; box-sizing: border-box; justify-content: flex-start; align-items: center; background: #fffaf0;">
             <h1 style="font-size: 28px; margin: 10px 0 5px 0; font-weight: 900;" id="reward-title">VICTORY</h1>
             
             <!-- 戰鬥結算報告卡片 -->
@@ -2428,6 +2420,27 @@
         </div>
     </div>
 
+    <!-- 全局玩家狀態 HUD (常駐下方) -->
+    <div id="global-player-hud" class="zone-player hidden">
+        <div class="hud-row" style="align-items: center; gap: 10px; margin-bottom: 6px; justify-content: flex-start;">
+            <div class="kao" id="p-kao"></div>
+            <!-- 金幣資訊列 -->
+            <div class="player-gold-bar" style="border: 2px solid black; background: white; padding: 4px 10px; display: flex; align-items: center; height: 32px; box-sizing: border-box; box-shadow: 2px 2px 0px #ccc;">
+                <span style="font-size: 15px; font-weight: bold; display: flex; align-items: center;"><i class="ra ra-gold-bar ra-fw" style="margin-right: 4px;"></i> <span id="battle-gold" style="margin-left: 3px;">0</span>G</span>
+            </div>
+        </div>
+        <!-- 遺物道具列區塊（單獨佔用整行，空間極其充裕） -->
+        <div class="player-relics-bar" style="border: 2px solid black; background: white; padding: 4px 8px; margin-bottom: 6px; box-shadow: 2px 2px 0px #ccc; display: flex; align-items: center; min-height: 32px; box-sizing: border-box; gap: 8px;">
+            <div style="font-size: 12px; font-weight: bold; border-right: 2px solid black; padding-right: 8px; white-space: nowrap; height: 100%; display: flex; align-items: center;" id="battle-relics-label">🎒 道具</div>
+            <div class="relic-bar" id="battle-relics" style="flex: 1; display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-start; margin: 0; min-height: auto;"></div>
+        </div>
+        <div class="tag-row" id="p-buffs" style="justify-content: flex-start;"></div>
+        <div class="tag-row" id="p-auras" style="justify-content: flex-start; margin-bottom: 4px;"></div>
+        <div class="hp-frame" style="margin-bottom: 10px;">
+            <div class="hp-fill" id="p-hp-bar"></div>
+            <div class="hp-text" id="p-hp-txt"></div>
+        </div>
+    </div>
 
     <script>
 
@@ -2834,6 +2847,53 @@
                 return grouped;
             },
 
+            // [新增] 更新全域玩家狀態 HUD
+            updatePlayerHUD: function () {
+                // 更新玩家臉部與名稱
+                const pKao = this.getPlayerKao();
+                const isBattleVisible = document.getElementById('scene-battle') && !document.getElementById('scene-battle').classList.contains('hidden');
+                const arrow = (this.state.turn === 'player' && !this.state.battleOver && isBattleVisible) ? '<span class="turn-arrow">◀</span>' : '';
+                const pKaoEl = document.getElementById('p-kao');
+                if (pKaoEl) {
+                    pKaoEl.innerHTML = `${pKao} ${T('YOU')}${arrow}`;
+                }
+                
+                // 更新 HP
+                const hpTxtEl = document.getElementById('p-hp-txt');
+                if (hpTxtEl) {
+                    hpTxtEl.innerText = `${T('HP')}: ${this.state.p_hp}/${this.state.p_max}`;
+                }
+                const hpBarEl = document.getElementById('p-hp-bar');
+                if (hpBarEl) {
+                    hpBarEl.style.width = (this.state.p_hp / this.state.p_max * 100) + '%';
+                }
+                
+                // 更新金幣
+                const goldEl = document.getElementById('battle-gold');
+                if (goldEl) {
+                    goldEl.innerText = this.state.gold;
+                }
+                
+                // 更新遺物
+                this.renderRelicBar('battle-relics');
+                
+                // 更新 Buff / Aura (僅在戰鬥時有用)
+                this.renderBuffs();
+                const aurasBar = document.getElementById('p-auras');
+                if (aurasBar) {
+                    aurasBar.innerHTML = '';
+                    if (this.state.auras.windrunner) {
+                        const el = document.createElement('span'); el.className = 'tag'; el.style.background = '#f0fff0'; el.style.border = '1px solid green'; el.innerText = USER_LANG === 'zh' ? '🌬️ 疾風光環' : '🌬️ Windrunner'; el.style.fontSize = '12px'; aurasBar.appendChild(el);
+                    }
+                    if (this.state.auras.element) {
+                        const el = document.createElement('span'); el.className = 'tag'; el.style.background = '#f0ffff'; el.style.border = '1px solid blue'; el.innerText = USER_LANG === 'zh' ? '⚡ 元素光環' : '⚡ Element'; el.style.fontSize = '12px'; aurasBar.appendChild(el);
+                    }
+                    if (this.state.auras.echo) {
+                        const el = document.createElement('span'); el.className = 'tag'; el.style.background = '#fff0f0'; el.style.border = '1px solid red'; el.innerText = USER_LANG === 'zh' ? '🔊 迴聲光環' : '🔊 Echo'; el.style.fontSize = '12px'; aurasBar.appendChild(el);
+                    }
+                }
+            },
+
             init: function () {
                 this.state.stage = 1;
                 this.state.p_hp = 100;
@@ -3069,6 +3129,7 @@
                 this.state.p_hp = Math.min(this.state.p_hp + 35, this.state.p_max);
                 const msg = USER_LANG === 'zh' ? "購買成功！生命恢復了 35 點。" : "Purchased successfully! Restored 35 HP.";
                 this.renderShop();
+                this.updatePlayerHUD();
                 this.showEventResult(msg);
             },
 
@@ -3146,6 +3207,7 @@
                     this.state.gold -= 75;
                     this.closeDeckSelect();
                     this.renderShop();
+                    this.updatePlayerHUD();
                     const msg = USER_LANG === 'zh' ? `已移除 [${card.rank}${Data.SUIT_META[card.suit].sym}]。` : `Removed [${card.rank}${Data.SUIT_META[card.suit].sym}].`;
                     this.showEventResult(msg);
                 } else if (mode === 'enchant') {
@@ -3155,6 +3217,7 @@
                     this.state.gold -= 100;
                     this.closeDeckSelect();
                     this.renderShop();
+                    this.updatePlayerHUD();
                     
                     const enchantNames = {
                         gold: { en: "Gold [G]", zh: "黃金 [G]" },
@@ -3173,6 +3236,7 @@
                 const bonus = this.getRelicBonus();
                 this.state.p_max = this.state.baseMaxHp + bonus.hp;
                 this.state.p_hp = Math.min(this.state.p_hp, this.state.p_max);
+                this.updatePlayerHUD();
             },
             hasRelic: function (id) { return this.state.relics.some(r => r.id === id); },
             getRelicCount: function (id) { return this.state.relics.filter(r => r.id === id).length; },
@@ -3214,33 +3278,63 @@
                     // [修正] TUTORIAL -> T('TUTORIAL')
                     this.createMapBtn(div, { kao: fixedLevel.enemy.kao, name: T(fixedLevel.enemy.name) }, 'wanted-poster', () => this.startBattle(null, fixedLevel), T(fixedLevel.name), T('TUTORIAL'));
                 } else {
-                    // 1. 左路 (Left Path) - 戰鬥
-                    const e = Generator.genEnemy(this.state.stage);
-                    let skillTxt = e.skill ? ` [${T(e.skill.desc)}]` : '';
-                    let leftSub = `${T('HP')}: ${e.hp} | ${T('ATK')}: ${e.atk} (${e.ai}${skillTxt})`;
-                    this.createMapBtn(div, { kao: e.kao, name: T(e.name) }, 'wanted-poster left-poster', () => this.startBattle(e), T('LEFT_PATH'), T(e.name), leftSub);
+                    const slots = ['left', 'middle', 'right'];
+                    const types = [];
 
-                    // 2. 中路 (Middle Path) - 安全整備
-                    const isShop = Utils.chance(0.5);
-                    if (isShop) {
-                        this.createMapBtn(div, { kao: '🏪', name: T('BLACK_MARKET') }, 'wanted-poster shop-poster', () => this.enterShop(), T('MIDDLE_PATH'), T('BLACK_MARKET'), T('DECK_UPGRADE'));
-                    } else {
-                        this.createMapBtn(div, { kao: '🔥', name: T(C_CAMPFIRE.name) }, 'wanted-poster camp-poster', () => this.startEvent(C_CAMPFIRE), T('MIDDLE_PATH'), T(C_CAMPFIRE.name), T('SAFE_ZONE'));
+                    // 1. Roll random types for the 3 slots
+                    for (let i = 0; i < 3; i++) {
+                        types.push(Utils.pick(['battle', 'safe', 'event']));
                     }
 
-                    // 3. 右路 (Right Path) - 神秘事件 (35%機率遭遇憤怒廚神師父的復仇事件)
-                    const randomEvents = C_EVENTS.filter(e => e.id !== 'e_beginning' && e.id !== 'e_first_event' && e.id !== 'e_injured_puppy' && e.id !== 'e_chef_master' && e.id !== 'e_golden_chest');
-                    let evt = null;
-                    if (this.state.chefDefeated && !this.state.masterChefDefeated && Utils.chance(0.35)) {
-                        evt = C_EVENTS.find(e => e.id === 'e_chef_master');
+                    // 2. Guarantee at least one battle
+                    if (!types.includes('battle')) {
+                        const forceIdx = Utils.randInt(0, 2);
+                        types[forceIdx] = 'battle';
                     }
-                    if (!evt && this.state.merchantKey && Utils.chance(0.50)) {
-                        evt = C_EVENTS.find(e => e.id === 'e_golden_chest');
-                    }
-                    if (!evt) {
-                        evt = Utils.weightedPick(randomEvents);
-                    }
-                    this.createMapBtn(div, { kao: '❓', name: T(evt.name) }, 'wanted-poster event-poster', () => this.startEvent(evt), T('RIGHT_PATH'), T(evt.name), T('UNKNOWN_REWARD'));
+
+                    const pathNames = {
+                        left: { en: "Left: ", zh: "左路：" },
+                        middle: { en: "Middle: ", zh: "中路：" },
+                        right: { en: "Right: ", zh: "右路：" }
+                    };
+                    const typeNames = {
+                        battle: { en: "Battle", zh: "戰鬥" },
+                        safe: { en: "Safe Zone", zh: "安全整備" },
+                        event: { en: "Mystery", zh: "神秘事件" }
+                    };
+
+                    // 3. Generate choice for each slot
+                    slots.forEach((slot, idx) => {
+                        const type = types[idx];
+                        const title = T(pathNames[slot]) + T(typeNames[type]);
+
+                        if (type === 'battle') {
+                            const e = Generator.genEnemy(this.state.stage);
+                            let skillTxt = e.skill ? ` [${T(e.skill.desc)}]` : '';
+                            let sub = `${T('HP')}: ${e.hp} | ${T('ATK')}: ${e.atk} (${e.ai}${skillTxt})`;
+                            this.createMapBtn(div, { kao: e.kao, name: T(e.name) }, 'wanted-poster', () => this.startBattle(e), title, T(e.name), sub);
+                        } else if (type === 'safe') {
+                            const isShop = Utils.chance(0.5);
+                            if (isShop) {
+                                this.createMapBtn(div, { kao: '🏪', name: T('BLACK_MARKET') }, 'wanted-poster shop-poster', () => this.enterShop(), title, T('BLACK_MARKET'), T('DECK_UPGRADE'));
+                            } else {
+                                this.createMapBtn(div, { kao: '🔥', name: T(C_CAMPFIRE.name) }, 'wanted-poster camp-poster', () => this.startEvent(C_CAMPFIRE), title, T(C_CAMPFIRE.name), T('SAFE_ZONE'));
+                            }
+                        } else { // event
+                            const randomEvents = C_EVENTS.filter(e => e.id !== 'e_beginning' && e.id !== 'e_first_event' && e.id !== 'e_injured_puppy' && e.id !== 'e_chef_master' && e.id !== 'e_golden_chest');
+                            let evt = null;
+                            if (this.state.chefDefeated && !this.state.masterChefDefeated && Utils.chance(0.35)) {
+                                evt = C_EVENTS.find(e => e.id === 'e_chef_master');
+                            }
+                            if (!evt && this.state.merchantKey && Utils.chance(0.50)) {
+                                evt = C_EVENTS.find(e => e.id === 'e_golden_chest');
+                            }
+                            if (!evt) {
+                                evt = Utils.weightedPick(randomEvents);
+                            }
+                            this.createMapBtn(div, { kao: '❓', name: T(evt.name) }, 'wanted-poster event-poster', () => this.startEvent(evt), title, T(evt.name), T('UNKNOWN_REWARD'));
+                        }
+                    });
                 }
             },
 
@@ -4648,9 +4742,21 @@
                         }
                     }
                 }
-                this.renderBuffs(); this.renderRelicBar('battle-relics'); this.renderRelicBar('map-relics');
+                this.updatePlayerHUD();
             },
-            showScene: function (id) { document.querySelectorAll('body > div[id^="scene-"]').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); },
+            showScene: function (id) {
+                document.querySelectorAll('body > div[id^="scene-"]').forEach(e => e.classList.add('hidden'));
+                document.getElementById(id).classList.remove('hidden');
+                const hud = document.getElementById('global-player-hud');
+                if (hud) {
+                    if (id === 'scene-start') {
+                        hud.classList.add('hidden');
+                    } else {
+                        hud.classList.remove('hidden');
+                        this.updatePlayerHUD();
+                    }
+                }
+            },
 
             win: function () {
                 this.state.battleOver = true;

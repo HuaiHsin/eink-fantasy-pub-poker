@@ -2058,6 +2058,12 @@
             animation: none !important;
         }
 
+        /* 確保效能模式下開始畫面的按鈕可以顯示 (避開因為停用淡入動畫導致的 opacity: 0) */
+        body.perf-mode #scene-start .game-btn {
+            opacity: 1 !important;
+            transform: none !important;
+        }
+
         /* 2. 效能模式下傷害飄動數字之定點高對比黑框白底樣式 */
         body.perf-mode .damage-popup {
             animation: none !important;

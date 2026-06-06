@@ -2428,14 +2428,14 @@
     <div id="global-player-hud" class="zone-player hidden">
         <div class="hud-row" style="align-items: center; gap: 10px; margin-bottom: 6px; justify-content: flex-start;">
             <div class="kao" id="p-kao"></div>
-            <!-- 金幣資訊列 -->
-            <div class="player-gold-bar" style="border: 2px solid black; background: white; padding: 4px 10px; display: flex; align-items: center; height: 32px; box-sizing: border-box; box-shadow: 2px 2px 0px #ccc;">
-                <span style="font-size: 15px; font-weight: bold; display: flex; align-items: center;"><i class="ra ra-gold-bar ra-fw" style="margin-right: 4px;"></i> <span id="battle-gold" style="margin-left: 3px;">0</span>G</span>
-            </div>
         </div>
-        <!-- 遺物道具列區塊（單獨佔用整行，空間極其充裕） -->
-        <div class="player-relics-bar" style="border: 2px solid black; background: white; padding: 4px 8px; margin-bottom: 6px; box-shadow: 2px 2px 0px #ccc; display: flex; align-items: center; min-height: 32px; box-sizing: border-box; gap: 8px;">
-            <div style="font-size: 12px; font-weight: bold; border-right: 2px solid black; padding-right: 8px; white-space: nowrap; height: 100%; display: flex; align-items: center;" id="battle-relics-label">🎒 道具</div>
+        <!-- 金錢與道具合併區塊 -->
+        <div class="player-info-bar" style="border: 2px solid black; background: white; padding: 4px 8px; margin-bottom: 6px; box-shadow: 2px 2px 0px #ccc; display: flex; align-items: center; min-height: 32px; box-sizing: border-box; gap: 8px;">
+            <!-- 左邊顯示金錢 -->
+            <div style="font-size: 14px; font-weight: bold; border-right: 2px solid black; padding-right: 8px; white-space: nowrap; align-self: stretch; display: flex; align-items: center;">
+                <span style="display: flex; align-items: center;"><i class="ra ra-gold-bar ra-fw" style="margin-right: 3px;"></i><span id="battle-gold">0</span>G</span>
+            </div>
+            <!-- 右邊是道具列 -->
             <div class="relic-bar" id="battle-relics" style="flex: 1; display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-start; margin: 0; min-height: auto;"></div>
         </div>
         <div class="tag-row" id="p-buffs" style="justify-content: flex-start;"></div>

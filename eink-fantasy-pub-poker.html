@@ -825,11 +825,11 @@
         <div class="zone-table">
             <div class="battle-status-bar">
                 <div class="status-pill">
-                    <span class="status-label">FIELD</span>
+                    <span id="field-label" class="status-label">FIELD</span>
                     <span id="field-icon">-</span>
                     <span id="field-rate" style="font-size: 12px;">1.0x</span>
                 </div>
-                <div class="status-pill"><span>🂠 DECK: <span id="deck-count">0</span></span></div>
+                <div class="status-pill"><span><span id="deck-label">🂠 DECK</span>: <span id="deck-count">0</span></span></div>
             </div>
 
             <div class="hud-row" style="margin-bottom: 8px; gap: 5px;">
@@ -881,7 +881,7 @@
         <div class="modal-box">
             <h3 style="border-bottom: 2px solid black; margin-bottom: 10px;">MY RELICS</h3>
             <div id="relic-list-content" style="text-align: left; font-size: 13px; line-height: 1.6; max-height: 300px; overflow-y: auto;"></div>
-            <button class="game-btn" onclick="Game.toggleRelicGuide()" style="margin-top: 15px;">CLOSE</button>
+            <button id="relics-close-btn" class="game-btn" onclick="Game.toggleRelicGuide()" style="margin-top: 15px;">CLOSE</button>
         </div>
     </div>
     <div id="modal-event-result" class="modal hidden">
@@ -915,7 +915,7 @@
                 <br>
                 <p><b>3. 成長 (Growth)</b><br>擊敗敵人可獲得 <b>Relics</b> (道具)，遭遇隨機事件可強化能力。活下去，挑戰更高層數！</p>
             </div>
-            <button class="game-btn" onclick="Game.toggleRules()" style="margin-top: 15px;">CLOSE</button>
+            <button id="rules-close-btn" class="game-btn" onclick="Game.toggleRules()" style="margin-top: 15px;">CLOSE</button>
         </div>
     </div>
 
@@ -924,7 +924,7 @@
             <h3 style="border-bottom: 2px solid black; margin-bottom: 10px;">BATTLE LOG</h3>
             <div id="log-content" style="text-align: left; font-size: 13px; line-height: 1.6; max-height: 350px; overflow-y: auto; background: var(--zone-bg); padding: 10px; border: 1px solid black;">
             </div>
-            <button class="game-btn" onclick="Game.toggleLog()" style="margin-top: 15px;">CLOSE</button>
+            <button id="log-close-btn" class="game-btn" onclick="Game.toggleLog()" style="margin-top: 15px;">CLOSE</button>
         </div>
     </div>
 
@@ -1146,6 +1146,19 @@
                 if (btnRules) btnRules.innerText = T('BTN_RULES');
                 const btnColor = document.querySelector('button[onclick="Game.toggleColor()"]');
                 if (btnColor) btnColor.innerText = T('BTN_COLOR');
+
+                // [翻譯] 戰鬥狀態列與彈窗關閉按鈕
+                const fieldLabel = document.getElementById('field-label');
+                if (fieldLabel) fieldLabel.innerText = T('FIELD');
+                const deckLabel = document.getElementById('deck-label');
+                if (deckLabel) deckLabel.innerText = '🂠 ' + T('DECK');
+
+                const relicsClose = document.getElementById('relics-close-btn');
+                if (relicsClose) relicsClose.innerText = T('BTN_CLOSE');
+                const logClose = document.getElementById('log-close-btn');
+                if (logClose) logClose.innerText = T('BTN_CLOSE');
+                const rulesClose = document.getElementById('rules-close-btn');
+                if (rulesClose) rulesClose.innerText = T('BTN_CLOSE');
 
                 this.showScene('scene-start');
             },

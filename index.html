@@ -3466,7 +3466,7 @@
                 evtData.choices.forEach(c => {
                     const btn = document.createElement('button');
                     btn.className = 'game-btn';
-                    btn.innerText = T(c.text);
+                    btn.innerText = T(c.text).replace(/\s*[\uff08(].*?[\uff09)]/g, '');
                     btn.onclick = () => this.resolveEventChoice(c);
                     btnGroup.appendChild(btn);
                 });

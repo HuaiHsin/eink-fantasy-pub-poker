@@ -449,7 +449,7 @@
                     const btn = document.createElement('button');
                     btn.className = 'game-btn';
                     // 這裡只顯示 c.text (例如 "Pray")，不再顯示後果
-                    btn.innerText = c.text; 
+                    btn.innerText = c.text.replace(/\s*[\uff08(].*?[\uff09)]/g, ''); 
                     btn.onclick = () => this.resolveEventChoice(c);
                     btnGroup.appendChild(btn);
                 });

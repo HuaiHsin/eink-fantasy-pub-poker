@@ -853,7 +853,7 @@
         </div>
         <div class="btn-group">
             <button class="game-btn" id="btn-discard" onclick="Game.onDiscard()" style="background:#fff0f0;">DISCARD</button>
-            <button class="game-btn" onclick="Game.onPlay()" style="background:#f0fff0;">ATTACK</button>
+            <button class="game-btn" id="btn-attack" onclick="Game.onPlay()" style="background:#f0fff0;">ATTACK</button>
             <button class="game-btn" onclick="Game.toggleGuide()" style="flex: 0 0 50px; font-size: 20px;">?</button>
         </div>
     </div>
@@ -1007,6 +1007,52 @@
             HAND_STR_FLUSH: { en: "Straight Flush", zh: "同花順" },
             HAND_5KIND: { en: "Five of a Kind", zh: "五條" }
         };
+
+        /* =========================================================================
+           [0.5] UI 狀態快取器 (UI State Tracker - E-ink Optimization)
+           ========================================================================= */
+        const UIState = {
+            cache: {},
+            updateText: function(id, value) {
+                if (this.cache[id] !== value) {
+                    const el = document.getElementById(id);
+                    if (el) el.innerText = value;
+                    this.cache[id] = value;
+                }
+            },
+            updateHtml: function(id, value) {
+                if (this.cache[id] !== value) {
+                    const el = document.getElementById(id);
+                    if (el) el.innerHTML = value;
+                    this.cache[id] = value;
+                }
+            },
+            updateStyleWidth: function(id, percentStr) {
+                const cacheKey = id + '_width';
+                if (this.cache[cacheKey] !== percentStr) {
+                    const el = document.getElementById(id);
+                    if (el) el.style.width = percentStr;
+                    this.cache[cacheKey] = percentStr;
+                }
+            },
+            updateDisabled: function(id, disabled) {
+                const cacheKey = id + '_disabled';
+                if (this.cache[cacheKey] !== disabled) {
+                    const el = document.getElementById(id);
+                    if (el) el.disabled = disabled;
+                    this.cache[cacheKey] = disabled;
+                }
+            },
+            updateClass: function(id, className) {
+                const cacheKey = id + '_class';
+                if (this.cache[cacheKey] !== className) {
+                    const el = document.getElementById(id);
+                    if (el) el.className = className;
+                    this.cache[cacheKey] = className;
+                }
+            }
+        };
+
         /* =========================================================================
            PART 1: GAME ENGINE (CORE LOGIC)
            ⚠️ 建議不要修改此區塊，除非您要改變遊戲核心規則。
@@ -1132,6 +1178,7 @@
                 this.state.battleRewardRule = null;
                 this.state.storyIndex = 0;
                 BuffSys.clear();
+                UIState.cache = {};
 
 
                 document.querySelectorAll('.modal').forEach(e => e.classList.add('hidden'));
@@ -1568,45 +1615,82 @@
 
             renderUI: function () {
                 const f = this.state.field; const e = this.state.enemy;
-                document.getElementById('deck-count').innerText = this.state.deck.length;
-                document.getElementById('field-icon').innerText = f.icon;
-                document.getElementById('field-rate').innerText = f.rate + 'x';
+                UIState.updateText('deck-count', this.state.deck.length);
+                UIState.updateText('field-icon', f.icon);
+                UIState.updateText('field-rate', f.rate + 'x');
                 const arrow = '<span class="turn-arrow">◀</span>';
                 // [翻譯] 敵人名字
-                let eHtml = `${e.kao} ${T(e.name)}`; if (this.state.turn === 'enemy') eHtml += arrow; document.getElementById('e-kao').innerHTML = eHtml;
+                let eHtml = `${e.kao} ${T(e.name)}`; if (this.state.turn === 'enemy') eHtml += arrow; 
+                UIState.updateHtml('e-kao', eHtml);
                 // [翻譯] HP, CD
-                document.getElementById('e-hp-txt').innerText = `${T('HP')}: ${e.hp}/${e.maxHp}`; document.getElementById('e-hp-bar').style.width = (e.hp / e.maxHp * 100) + '%';
-                document.getElementById('e-tags').innerHTML = `<span class='tag warn'>${e.ai}</span> <span class='tag'>${T('CD')}:${e.cd}</span>`;
+                UIState.updateText('e-hp-txt', `${T('HP')}: ${e.hp}/${e.maxHp}`); 
+                UIState.updateStyleWidth('e-hp-bar', (e.hp / e.maxHp * 100) + '%');
+                UIState.updateHtml('e-tags', `<span class='tag warn'>${e.ai}</span> <span class='tag'>${T('CD')}:${e.cd}</span>`);
 
                 const pct = this.state.p_hp / this.state.p_max; let pKao = C_VISUALS.Kaomoji.Player[0]; if (pct > 0.75) pKao = C_VISUALS.Kaomoji.Player[1]; else if (pct > 0.5) pKao = C_VISUALS.Kaomoji.Player[2]; else if (pct > 0.25) pKao = C_VISUALS.Kaomoji.Player[3];
                 // [翻譯] YOU
-                let pHtml = `${pKao} ${T('YOU')}`; if (this.state.turn === 'player') pHtml += arrow; document.getElementById('p-kao').innerHTML = pHtml;
+                let pHtml = `${pKao} ${T('YOU')}`; if (this.state.turn === 'player') pHtml += arrow; 
+                UIState.updateHtml('p-kao', pHtml);
                 // [翻譯] HP
-                document.getElementById('p-hp-txt').innerText = `${T('HP')}: ${this.state.p_hp}/${this.state.p_max}`; document.getElementById('p-hp-bar').style.width = (this.state.p_hp / this.state.p_max * 100) + '%';
+                UIState.updateText('p-hp-txt', `${T('HP')}: ${this.state.p_hp}/${this.state.p_max}`); 
+                UIState.updateStyleWidth('p-hp-bar', (this.state.p_hp / this.state.p_max * 100) + '%');
                 // [翻譯] DISCARD
-                document.getElementById('btn-discard').innerText = `${T('BTN_DISCARD')} (${this.state.discLeft})`; document.getElementById('btn-discard').disabled = BuffSys.isDiscardBanned() || this.state.discLeft <= 0;
-                // [翻譯] ATTACK (動態尋找並翻譯)
-                const btnAttack = document.querySelector('button[onclick="Game.onPlay()"]'); if (btnAttack) btnAttack.innerText = T('BTN_ATTACK');
+                UIState.updateText('btn-discard', `${T('BTN_DISCARD')} (${this.state.discLeft})`); 
+                UIState.updateDisabled('btn-discard', BuffSys.isDiscardBanned() || this.state.discLeft <= 0);
+                // [翻譯] ATTACK
+                UIState.updateText('btn-attack', T('BTN_ATTACK'));
 
-                const container = document.getElementById('card-container'); container.innerHTML = '';
-                if (this.state.hint) document.getElementById('msg-box').innerText = T(this.state.hint);
+                const container = document.getElementById('card-container');
+                if (this.state.hint) UIState.updateText('msg-box', T(this.state.hint));
+
+                // Recreate layout slots once if table size changes
+                if (container.children.length !== this.state.tableMax) {
+                    container.innerHTML = '';
+                    for (let i = 0; i < this.state.tableMax; i++) {
+                        const slot = document.createElement('div');
+                        container.appendChild(slot);
+                        delete UIState.cache['card_' + i];
+                    }
+                }
 
                 for (let i = 0; i < this.state.tableMax; i++) {
+                    const el = container.children[i];
                     const c = this.state.table[i];
-                    if (c === null) { const p = document.createElement('div'); p.className = 'card-placeholder'; container.appendChild(p); }
-                    else {
-                        const el = document.createElement('div'); const isSel = this.state.selected.includes(i); const meta = Data.SUIT_META[c.suit]; const isBanned = BuffSys.isSuitBanned(c.suit);
-                        el.className = `card ${isSel ? 'selected' : ''} ${isBanned ? 'disabled' : ''}`; if (c.rank === 'JO') el.classList.add('joker');
-                        el.onclick = () => { if (!isBanned) this.toggleCard(i); };
+                    const cacheKey = 'card_' + i;
 
-                        // [新增] 濃霧效果：如果場地是 blind，且這張卡「沒有被選取」，則隱藏點數
+                    if (c === null) {
+                        if (UIState.cache[cacheKey] !== 'null') {
+                            el.className = 'card-placeholder';
+                            el.innerHTML = '';
+                            el.onclick = null;
+                            UIState.cache[cacheKey] = 'null';
+                        }
+                    } else {
+                        const isSel = this.state.selected.includes(i);
+                        const isBanned = BuffSys.isSuitBanned(c.suit);
                         const isFoggy = f.special === 'blind' && !isSel && !this.hasRelic('r_umb');
-                        const displayRank = isFoggy ? '?' : c.rank;
+                        const fieldSuitMatch = (f.suit && c.suit === f.suit) ? (f.rate > 1 ? 'up' : 'down') : 'none';
+                        const stateStr = c.id + '_' + c.suit + '_' + c.rank + '_' + isSel + '_' + isBanned + '_' + isFoggy + '_' + fieldSuitMatch;
 
-                        if (f.suit && c.suit === f.suit) { const icon = f.rate > 1 ? '⬆️' : '⬇️'; el.innerHTML += `<div class="card-badge">${icon}</div>`; }
-                        if (c.rank === 'JO') el.innerHTML += `<div class="joker-txt">JOKER</div><div class="suit-big">🃏</div><div class="joker-bot">JOKER</div>`;
-                        else el.innerHTML += `<div class="rank-txt ${meta.style}">${displayRank}</div><div class="suit-big ${meta.style}">${meta.sym}</div><div class="rank-bot ${meta.style}">${displayRank}</div>`;
-                        container.appendChild(el);
+                        if (UIState.cache[cacheKey] !== stateStr) {
+                            el.className = 'card ' + (isSel ? 'selected' : '') + ' ' + (isBanned ? 'disabled' : '') + ' ' + (c.rank === 'JO' ? 'joker' : '');
+                            el.onclick = () => { if (!isBanned) this.toggleCard(i); };
+
+                            const displayRank = isFoggy ? '?' : c.rank;
+                            let html = '';
+                            if (f.suit && c.suit === f.suit) {
+                                const icon = f.rate > 1 ? '⬆️' : '⬇️';
+                                html += `<div class="card-badge">${icon}</div>`;
+                            }
+                            if (c.rank === 'JO') {
+                                html += `<div class="joker-txt">JOKER</div><div class="suit-big">🃏</div><div class="joker-bot">JOKER</div>`;
+                            } else {
+                                const meta = Data.SUIT_META[c.suit];
+                                html += `<div class="rank-txt ${meta.style}">${displayRank}</div><div class="suit-big ${meta.style}">${meta.sym}</div><div class="rank-bot ${meta.style}">${displayRank}</div>`;
+                            }
+                            el.innerHTML = html;
+                            UIState.cache[cacheKey] = stateStr;
+                        }
                     }
                 }
                 this.renderBuffs(); this.renderRelicBar('battle-relics'); this.renderRelicBar('map-relics');
@@ -1742,8 +1826,37 @@
                     }, 500);
                 }
             },
-            renderRelicBar: function (id) { const bar = document.getElementById(id); if (!bar) return; bar.innerHTML = ""; this.state.relics.forEach(r => { const icon = document.createElement('div'); icon.className = 'relic-icon'; icon.innerText = r.icon; icon.onclick = () => Game.toggleRelicGuide(); bar.appendChild(icon); }); },
-            renderBuffs: function () { const bar = document.getElementById('p-buffs'); if (!bar) return; bar.innerHTML = ""; BuffSys.activeBuffs.forEach(b => { const el = document.createElement('span'); el.className = 'tag warn'; el.innerText = `${b.name}(${b.duration})`; bar.appendChild(el); }); },
+            renderRelicBar: function (id) {
+                const bar = document.getElementById(id);
+                if (!bar) return;
+                const stateStr = this.state.relics.map(r => r.id).join(',');
+                if (UIState.cache[id] !== stateStr) {
+                    bar.innerHTML = "";
+                    this.state.relics.forEach(r => {
+                        const icon = document.createElement('div');
+                        icon.className = 'relic-icon';
+                        icon.innerText = r.icon;
+                        icon.onclick = () => Game.toggleRelicGuide();
+                        bar.appendChild(icon);
+                    });
+                    UIState.cache[id] = stateStr;
+                }
+            },
+            renderBuffs: function () {
+                const bar = document.getElementById('p-buffs');
+                if (!bar) return;
+                const stateStr = BuffSys.activeBuffs.map(b => `${b.name}(${b.duration})`).join(',');
+                if (UIState.cache['p-buffs'] !== stateStr) {
+                    bar.innerHTML = "";
+                    BuffSys.activeBuffs.forEach(b => {
+                        const el = document.createElement('span');
+                        el.className = 'tag warn';
+                        el.innerText = `${b.name}(${b.duration})`;
+                        bar.appendChild(el);
+                    });
+                    UIState.cache['p-buffs'] = stateStr;
+                }
+            },
             toggleColor: function () { document.body.classList.toggle('bw-mode'); },
             toggleRules: function () { document.getElementById('modal-rules').classList.toggle('hidden'); },
             toggleGuide: function () {
@@ -1809,7 +1922,7 @@
             toggleRelicGuide: function () { const modal = document.getElementById('modal-relics'); if (modal.classList.contains('hidden')) { const list = document.getElementById('relic-list-content'); list.innerHTML = ""; if (this.state.relics.length === 0) { list.innerHTML = "<div style='text-align:center; color:#999;'>No relics yet.</div>"; } else { this.state.relics.forEach(r => { const item = document.createElement('div'); item.style.marginBottom = "8px"; item.style.borderBottom = "1px dashed #ccc"; item.style.paddingBottom = "4px"; item.innerHTML = `<span style="font-size:18px">${r.icon}</span> <b>${T(r.name)}</b><br><span style="color:#555;">${T(r.desc)}</span>`; list.appendChild(item); }); } modal.classList.remove('hidden'); } else { modal.classList.add('hidden'); } },
             msg: function (t) {
                 // 1. 更新主畫面的即時訊息
-                document.getElementById('msg-box').innerText = t;
+                UIState.updateText('msg-box', t);
 
                 // 2. 記錄到歷史日誌中
                 const speaker = this.state.turn === 'player' ? 'YOU' : 'ENM';

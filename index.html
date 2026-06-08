@@ -2518,6 +2518,7 @@
             MSG_SELECT: { en: "⚠️ Select cards!", zh: "⚠️ 請選擇卡牌！" },
             MSG_SELECT_ONE: { en: "⚠️ Select 1 card!", zh: "⚠️ 請選擇 1 張牌！" },
             MSG_SUIT_BAN: { en: "🚫 Suit Banned!", zh: "🚫 花色被禁用！" },
+            MSG_RESHUFFLE: { en: "🔄 Deck empty. Reshuffling!", zh: "🔄 牌庫已空，重新洗牌！" },
             MSG_WEAK: { en: "Weakened!", zh: "虛弱！傷害減半" },
             MSG_DODGE: { en: "👢 DODGE!", zh: "👢 閃避！" },
             MSG_BLOCK: { en: "🧬 Blocked!", zh: "🧬 傷害無效！" },
@@ -4098,8 +4099,36 @@
                     }, isElite ? 1200 : 800);
                 }
             },
+            reshuffleDeck: function () {
+                if (!this.state.customDeck) return;
+                // 找出目前不在桌面上的牌
+                const cardsOnTableIds = this.state.table.filter(c => c !== null).map(c => c.id);
+                const remainingCards = this.state.customDeck.filter(c => !cardsOnTableIds.includes(c.id));
+                
+                if (remainingCards.length > 0) {
+                    this.state.deck = JSON.parse(JSON.stringify(remainingCards));
+                    Utils.shuffle(this.state.deck);
+                    this.msg(T('MSG_RESHUFFLE'));
+                    const msgBox = document.getElementById('msg-box');
+                    if (msgBox) {
+                        msgBox.classList.add('msg-flash');
+                        setTimeout(() => msgBox.classList.remove('msg-flash'), 400);
+                    }
+                }
+            },
             createDeck: function () { let d = []; let id = 0; for (let s of SUITS) for (let r of RANKS) d.push({ suit: s, rank: r, val: Data.VALUES[r], id: id++ }); d.push({ suit: 'j', rank: 'JO', val: 15, id: id++ }); d.push({ suit: 'j', rank: 'JO', val: 15, id: id++ }); return Utils.shuffle(d); },
-            dealTable: function () { for (let i = 0; i < this.state.tableMax; i++) if (this.state.table[i] === null && this.state.deck.length > 0) this.state.table[i] = this.state.deck.pop(); },
+            dealTable: function () {
+                for (let i = 0; i < this.state.tableMax; i++) {
+                    if (this.state.table[i] === null) {
+                        if (this.state.deck.length === 0) {
+                            this.reshuffleDeck();
+                        }
+                        if (this.state.deck.length > 0) {
+                            this.state.table[i] = this.state.deck.pop();
+                        }
+                    }
+                }
+            },
             toggleCard: function (idx) {
                 if (this.state.battleOver) return;
                 if (this.state.turn !== 'player') return;
@@ -4298,9 +4327,6 @@
 
                 // 2. 死亡與結束判定
                 if (this.state.p_hp <= 0) { this.gameOver(false); return; }
-                if (this.state.table.every(c => c === null) && this.state.deck.length === 0) {
-                    if (this.state.p_hp > this.state.enemy.hp) this.win(); else this.gameOver(false); return;
-                }
 
                 // 3. 準備下一回合，並增加回合計數器 (turnCount)
                 this.dealTable();

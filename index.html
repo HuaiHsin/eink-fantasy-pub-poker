@@ -3375,6 +3375,53 @@
                 this.showScene('scene-event');
 
                 let actualEvt = { ...evtData };
+
+                // [新增] 方案 A：以其他牌組進行開局時，顯示客製化幽默劇情
+                if (evtData.id === 'e_beginning') {
+                    const deckType = this.state.starterDeckType || 'classic';
+                    if (deckType === 'swift') {
+                        actualEvt.text = {
+                            en: "You slowly open your eyes and sit up... wait, you feel incredibly fast! No slow cards in your deck means you are ready to speedrun. Suddenly, the Fairy Elf pops out of the bushes, looks at your deck, and sighs...",
+                            zh: "你緩緩睜開眼睛，並坐起身子……等等，你感覺全身輕盈無比！沒有那些低點數爛牌的拖累，你覺得自己能以光速破關。突然一旁的草叢中出現小光點，小仙女飄了出來，看著你的牌組嘆了口氣……"
+                        };
+                        actualEvt.choices = [
+                            { text: { en: "Why the sigh?", zh: "幹嘛嘆氣？" }, type: "leave", res: { en: "She shakes her head in disbelief.", zh: "她難以置信地搖搖頭。" } },
+                            { text: { en: "Let's speedrun!", zh: "衝啦！速通！" }, type: "leave", res: { en: "She barely keeps up with you.", zh: "她差點跟不上你的速度。" } }
+                        ];
+                    } else if (deckType === 'lucky') {
+                        actualEvt.text = {
+                            en: "You slowly open your eyes. The forest smells of high roller luck. Your deck consists only of Spades and Hearts. The Fairy Elf emerges from the bushes wearing a tiny dealer's vest, shaking her head...",
+                            zh: "你緩緩睜開眼睛，空氣中有一種高賭注賭局的氣氛。你的牌庫只剩下黑桃與紅心，連空氣都散發著好運。小仙女從草叢裡鑽了出來，身上居然穿著一件迷你發牌員小背心，對著你搖搖頭……"
+                        };
+                        actualEvt.choices = [
+                            { text: { en: "Ask for a deal", zh: "給偶發牌" }, type: "leave", res: { en: "She shuffles the cards with professional speed.", zh: "她用專業的手法洗了洗牌。" } },
+                            { text: { en: "Why the vest?", zh: "你穿這什麼衣服？" }, type: "leave", res: { en: "She rolls her eyes.", zh: "她翻了個白眼。" } }
+                        ];
+                    }
+                } else if (evtData.id === 'e_first_event') {
+                    const deckType = this.state.starterDeckType || 'classic';
+                    if (deckType === 'swift') {
+                        actualEvt.dialogue = [
+                            { speaker: 'Fairy Elf', text: { en: "Oh, it's you again, the point-grinding machine! And you're starting with the Swift Deck? Let me guess, you're in a rush to beat the Boss again?", zh: "喔，又是你這個無情的刷分機器。這次還選了疾風牌組？讓我猜猜，你是不是急著去揍魔王，連一秒的林中漫步都不想要？" } },
+                            { speaker: 'player', text: { en: "How did you know? I want to skip the tutorial!", zh: "你怎麼知道？我想直接跳過教學！" } },
+                            { speaker: 'Fairy Elf', text: { en: "Fine, fine! Let's skip the dramatic forest stuff. The Palace Guard is already waiting for you. Go show him your speedrun!", zh: "行行行，新手教學直接跳過。皇宮守衛已經在門口等你了，去展現你的速通技術吧！" } }
+                        ];
+                        actualEvt.choices = [
+                            { text: { en: "To the guard!", zh: "去打守衛！" }, type: "leave", res: { en: "She flies ahead of you, trying to keep pace.", zh: "她努力跟上你的腳步，飛在前面。" } }
+                        ];
+                    } else if (deckType === 'lucky') {
+                        actualEvt.dialogue = [
+                            { speaker: 'Fairy Elf', text: { en: "You actually unlocked and selected the Lucky Deck? Ah, the gambler's choice. Did you bribe the system developers to only give you Hearts and Spades?", zh: "你竟然選了幸運牌組？這滿手都是黑桃和紅心……你是給了系統開發者紅包，還是自己修改了存檔？" } },
+                            { speaker: 'player', text: { en: "Hey, it's called strategic deck building! Flushes are so easy now.", zh: "嘿，這叫策略性牌組構築！現在湊同花簡直像喝水一樣。" } },
+                            { speaker: 'Fairy Elf', text: { en: "Well, with only two suits, your flushes are guaranteed. Since you chose the easy way, let's skip the small talk. Go directly to the guard and show him what a real high roller does!", zh: "好吧，既然你作弊作得這麼理直氣壯，那我也懶得跟你講廢話了。直接去跟守衛對決，讓他看看什麼叫真正的賭神吧！" } }
+                        ];
+                        actualEvt.choices = [
+                            { text: { en: "Bet on Spade!", zh: "押黑桃！" }, type: "leave", res: { en: "She shuffles and nods.", zh: "她一邊點頭一邊洗牌。" } },
+                            { text: { en: "Bet on Heart!", zh: "押紅心！" }, type: "leave", res: { en: "She smiles and shuffles the cards.", zh: "她笑著開始洗牌。" } }
+                        ];
+                    }
+                }
+
                 if (evtData === C_CAMPFIRE && this.state.puppyHealed && Math.random() < 0.40) {
                     actualEvt = {
                         name: { en: 'Loyal Puppy', zh: '報恩的小狗' },

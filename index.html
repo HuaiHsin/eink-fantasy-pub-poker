@@ -439,6 +439,17 @@
             overflow: hidden;
             /* 防止裝飾溢出 */
         }
+        .enemy-name-row {
+            font-size: 1.1rem;
+            font-weight: 900;
+            margin-bottom: 8px;
+            text-align: center;
+            background: var(--paper);
+            padding: 2px 10px;
+            border: 2px solid var(--ink);
+            box-shadow: 2px 2px 0px var(--ink);
+            display: inline-block;
+        }
 
         .enemy-row {
             display: flex;
@@ -2202,6 +2213,7 @@
 
     <div id="scene-battle" class="hidden">
         <div class="zone-enemy">
+            <div class="enemy-name-row"><span id="e-name"></span></div>
             <div class="enemy-row">
                 <div class="scene-decorator" id="e-scene-l"></div>
                 <div class="kao" id="e-kao"></div>
@@ -4754,10 +4766,16 @@
                     // ===== 正常戰鬥 UI =====
                     const e = this.state.enemy;
                     const arrow = '<span class="turn-arrow">◀</span>';
-                    // [翻譯] 敵人名字
-                    let eHtml = `${e.kao} ${T(e.name)}`; if (this.state.turn === 'enemy') eHtml += arrow; 
+                    
+                    // Render name and arrow in the separate name row
+                    let nameHtml = `${T(e.name)}`;
+                    if (this.state.turn === 'enemy') nameHtml += arrow;
+                    const eNameEl = document.getElementById('e-name');
+                    if (eNameEl) eNameEl.innerHTML = nameHtml;
+
+                    // Render kao (emoticon) only in e-kao
                     const eKaoEl = document.getElementById('e-kao');
-                    eKaoEl.innerHTML = eHtml;
+                    eKaoEl.innerText = e.kao;
                     
                     // [新增] 敵人蓄力警告 (CD <= 1 時加 charge-blink 類別)
                     if (e.cd <= 1 && this.state.turn === 'player') {

@@ -4015,7 +4015,7 @@
                 this.state.deck = [];
                 this.state.field = Data.FIELD_FACTORS[0]; // none
                 // 建立一個假敵人避免 renderUI 報錯
-                this.state.enemy = { name: { en: 'Puppy', zh: '小狗' }, kao: 'ฅ^•ﻌ•^ฅ', hp: 1, maxHp: 1, atk: 0, cd: 99, maxCd: 99, ai: '', isElite: false, skill: null, trait: null };
+                this.state.enemy = { name: { en: 'Puppy', zh: '小狗' }, kao: 'ฅ^•ﻌ•^ฅ', hp: 1, maxHp: 1, atk: 0, cd: 99, maxCd: 99, ai: '', isElite: false, skill: null, trait: null, svgKey: 'Injured Puppy' };
 
                 this.showScene('scene-battle');
                 this.renderUI();
@@ -4080,7 +4080,7 @@
 
                 if (fixedLevel) {
                     const fe = fixedLevel.enemy;
-                    this.state.enemy = { id: 'fixed', name: fe.name, kao: fe.kao, hp: fe.hp, maxHp: fe.hp, atk: fe.atk, cd: fe.cd, maxCd: fe.cd, ai: fe.ai, isElite: false, skill: null };
+                    this.state.enemy = { id: 'fixed', name: fe.name, kao: fe.kao, hp: fe.hp, maxHp: fe.hp, atk: fe.atk, cd: fe.cd, maxCd: fe.cd, ai: fe.ai, isElite: false, skill: null, svgKey: fe.svgKey };
                     this.state.tableMax = fixedLevel.tableMax; this.state.hint = fixedLevel.hint;
                     if (fixedLevel.fixedCards) {
                         this.state.deck = []; this.state.table = fixedLevel.fixedCards.map((c, i) => ({ suit: c.s, rank: c.r, val: Data.VALUES[c.r], id: i }));
@@ -4812,7 +4812,7 @@
                     // Render kao: SVG first, kaomoji fallback
                     const eKaoEl = document.getElementById('e-kao');
                     const enemyRow = eKaoEl.closest('.enemy-row');
-                    const svgMarkup = getSvgForEnemy(e.name);
+                    const svgMarkup = getSvgForEnemy(e);
 
                     if (svgMarkup) {
                         // SVG mode: inject defs + SVG with float animation
@@ -6637,12 +6637,26 @@
 
         };
 
-        // [SVG] 根據敵人名稱查找對應 SVG 圖形
-        function getSvgForEnemy(enemyName) {
-            const en = (typeof enemyName === 'string') ? enemyName : (enemyName.en || '');
-            // Direct match (bosses, fixed enemies)
+        // [SVG] 根據敵人查找對應 SVG 圖形
+        function getSvgForEnemy(enemy) {
+            if (!enemy) return null;
+            
+            // 優先：如果敵人有明確指定的 svgKey，直接使用
+            if (enemy.svgKey && SVG_ASSETS[enemy.svgKey]) {
+                return SVG_ASSETS[enemy.svgKey];
+            }
+            
+            // 次之：用名字進行匹配，並處理雙語和 Boss 後綴
+            const nameObj = enemy.name || enemy;
+            let en = (typeof nameObj === 'string') ? nameObj : (nameObj.en || '');
+            
+            // 清理 Boss 標籤後綴 (如 "Forest Elder [BOSS]" -> "Forest Elder")
+            en = en.replace(/\s*\[BOSS\]$/, '').trim();
+            
+            // 精確匹配 (Boss, 固定敵人)
             if (SVG_ASSETS[en]) return SVG_ASSETS[en];
-            // Noun suffix match (random enemies: "Mad Slime" -> "Slime")
+            
+            // 字尾名詞匹配 (隨機產生的怪物: "Mad Slime" -> "Slime")
             for (const noun of C_MONSTER_NAMES.Noun) {
                 if (en.endsWith(noun.en) && SVG_ASSETS[noun.en]) {
                     return SVG_ASSETS[noun.en];
@@ -6655,19 +6669,19 @@
         C_LEVELS = {
             1: {
                 name: { en: "Tutorial 1", zh: "初試啼聲" },
-                enemy: { name: { en: "Cute Pet", zh: "可愛小動物" }, kao: "ฅ^•ﻌ•^ฅ", hp: 10, atk: 1, cd: 9, ai: 'Random' },
+                enemy: { name: { en: "Cute Pet", zh: "可愛小動物" }, kao: "ฅ^•ﻌ•^ฅ", hp: 10, atk: 1, cd: 9, ai: 'Random', svgKey: 'Injured Puppy' },
                 tableMax: 4, fixedCards: [{ s: 's', r: 'A' }, { s: 'h', r: 'A' }, { s: 'd', r: 'A' }, { s: 'c', r: 'A' }],
                 hint: { en: "(っ◕‿◕)っ Select cards then click ATTACK", zh: "(っ◕‿◕)っ 請先選牌，然後按攻擊" }, drop: null
             },
             2: {
                 name: { en: "Tutorial 2", zh: "認識牌型" },
-                enemy: { name: { en: "Bad Pet", zh: "不可愛動物" }, kao: "ฅ^✧ܫ✧^ฅ", hp: 10, atk: 1, cd: 9, ai: 'Random' },
+                enemy: { name: { en: "Bad Pet", zh: "不可愛動物" }, kao: "ฅ^✧ܫ✧^ฅ", hp: 10, atk: 1, cd: 9, ai: 'Random', svgKey: 'Wolf' },
                 tableMax: 5, fixedCards: [{ s: 's', r: '10' }, { s: 's', r: 'J' }, { s: 's', r: 'Q' }, { s: 's', r: 'K' }, { s: 's', r: 'A' }],
                 hint: { en: "(っ◕‿◕)っ Pick 5 cards for bigger damage!", zh: "(っ◕‿◕)っ 選滿5張同花順可造成更高傷害" }, drop: null
             },
             3: {
                 name: { en: "Tutorial 3", zh: "牛刀小試" },
-                enemy: { name: { en: "Evil Pet", zh: "邪惡小動物" }, kao: "ฅ^*w*^ฅ", hp: 100, atk: 1, cd: 2, ai: 'Random' },
+                enemy: { name: { en: "Evil Pet", zh: "邪惡小動物" }, kao: "ฅ^*w*^ฅ", hp: 100, atk: 1, cd: 2, ai: 'Random', svgKey: 'Imp' },
                 tableMax: 8, fixedCards: null,
                 hint: { en: "(っ◕‿◕)っ Try to win a real battle!", zh: "(っ◕‿◕)っ 請嘗試贏得一場比賽吧！" }, drop: 'random'
             }
@@ -6697,7 +6711,8 @@
                     name: { en: "Palace Guard", zh: "皇宮守衛" },
                     kao: "🛡️(ò_ó)⚔️",
                     hp: 300, maxHp: 300, atk: 15, cd: 3, maxCd: 3,
-                    ai: 'High', isElite: false, skill: null, trait: null
+                    ai: 'High', isElite: false, skill: null, trait: null,
+                    svgKey: 'Orc'
                 },
                 // 設定獎勵類型：'random' (隨機三選一) 或 'fixed' (指定道具)
                 rewardType: 'fixed',
@@ -6722,7 +6737,8 @@
                     maxCd: 3,
                     ai: Data.AI_TYPES.MAX_HAND,
                     skill: null,
-                    isElite: true
+                    isElite: true,
+                    svgKey: 'Volcanic Dragon'
                 },
                 rewardType: 'random'
             },

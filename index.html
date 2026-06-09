@@ -487,6 +487,42 @@
             opacity: 0.5;
         }
 
+        /* === SVG Battle Sprite Rendering === */
+        #e-kao .eink-sprite {
+            width: 80px;
+            height: 80px;
+            stroke: var(--ink);
+            fill: none;
+            stroke-width: 2px;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        #e-kao .eink-sprite.sprite-float {
+            animation: kao-sprite-float 3s ease-in-out infinite;
+        }
+
+        @keyframes kao-sprite-float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-6px) rotate(2deg); }
+        }
+
+        /* SVG mode: hide left/right text decorator lines */
+        .enemy-row.svg-mode .scene-decorator {
+            visibility: hidden;
+            width: 0;
+            overflow: hidden;
+            flex: 0;
+            padding: 0;
+            margin: 0;
+        }
+
+        .enemy-row.svg-mode .kao {
+            flex: 0 0 auto;
+        }
+
+
+
         /* 小仙女的考驗 - 題目卡片 */
         .puzzle-question {
             display: flex;
@@ -4773,9 +4809,24 @@
                     const eNameEl = document.getElementById('e-name');
                     if (eNameEl) eNameEl.innerHTML = nameHtml;
 
-                    // Render kao (emoticon) only in e-kao
+                    // Render kao: SVG first, kaomoji fallback
                     const eKaoEl = document.getElementById('e-kao');
-                    eKaoEl.innerText = e.kao;
+                    const enemyRow = eKaoEl.closest('.enemy-row');
+                    const svgMarkup = getSvgForEnemy(e.name);
+
+                    if (svgMarkup) {
+                        // SVG mode: inject defs + SVG with float animation
+                        const defsHtml = '<svg width="0" height="0" style="position:absolute"><defs><pattern id="dither-battle" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="currentColor" stroke="none"/><rect x="2" y="2" width="2" height="2" fill="currentColor" stroke="none"/></pattern></defs></svg>';
+                        const adjustedSvg = svgMarkup
+                            .replace(/dither-pattern-fairy/g, 'dither-battle')
+                            .replace('eink-sprite', 'eink-sprite sprite-float');
+                        eKaoEl.innerHTML = defsHtml + adjustedSvg;
+                        if (enemyRow) enemyRow.classList.add('svg-mode');
+                    } else {
+                        // Kaomoji fallback: plain text, restore decorator lines
+                        eKaoEl.innerText = e.kao;
+                        if (enemyRow) enemyRow.classList.remove('svg-mode');
+                    }
                     
                     // [新增] 敵人蓄力警告 (CD <= 1 時加 charge-blink 類別)
                     if (e.cd <= 1 && this.state.turn === 'player') {
@@ -6000,6 +6051,605 @@
                 { text: { en: 'Train', zh: '鍛鍊' }, type: 'camp_train', res: { en: 'You practiced moves. Base DMG +10!', zh: '你鍛鍊了招式。基礎傷害 +10！' } }
             ]
         };
+
+
+        // [SVG] 角色圖形資產表 (extracted from eink_demo.html)
+        const SVG_ASSETS = {
+            'Fairy Elf': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <path d="M 32 40 L 40 22 C 45 20, 55 20, 60 22 L 68 40 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 33 37 Q 50 40 67 37 L 68 40 Q 50 43 32 40 Z" fill="url(#dither-pattern-fairy)" stroke-width="1.5" />
+                    <path d="M 20 42 Q 50 35 80 42 C 85 43, 85 45, 80 46 Q 50 39 20 46 C 15 45, 15 43, 20 42 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 34 45 C 34 60, 66 60, 66 45" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 34 45 C 34 50, 66 50, 66 45 Q 50 39 34 45 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <circle cx="44" cy="48" r="1.5" fill="currentColor" stroke="none" />
+                    <circle cx="56" cy="48" r="1.5" fill="currentColor" stroke="none" />
+                    <path d="M 46 54 Q 50 56 54 54" fill="none" stroke-width="1.5" />
+                    <path d="M 32 58 L 22 76 Q 50 79 78 76 L 68 58 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 32 58 L 50 78 L 68 58" fill="none" stroke-width="1.5" />
+                </svg>`,
+
+            // MISSING: 'Player'
+            'Forest Elder': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- 樹幹 -->
+                    <path d="M 38 90 L 42 45 Q 50 48 58 45 L 62 90 Z" fill="var(--paper)" stroke-width="2" />
+                    <!-- 樹根 -->
+                    <path d="M 38 90 C 35 92, 30 90, 25 93 M 62 90 C 65 92, 70 90, 75 93 M 50 90 L 50 94" fill="none" stroke-width="1.5" />
+                    <!-- 樹皮與裂紋 -->
+                    <path d="M 46 52 L 44 80 M 54 54 L 56 75 M 48 68 Q 50 70 52 68" fill="none" stroke-width="1.5" />
+                    <!-- 樹洞怒眼 -->
+                    <ellipse cx="44" cy="58" rx="2.5" ry="1.5" fill="none" stroke-width="1.5" />
+                    <circle cx="44" cy="58" r="0.8" fill="currentColor" stroke="none" />
+                    <ellipse cx="56" cy="58" rx="2.5" ry="1.5" fill="none" stroke-width="1.5" />
+                    <circle cx="56" cy="58" r="0.8" fill="currentColor" stroke="none" />
+                    <path d="M 41 55 L 47 57 M 59 55 L 53 57" stroke-width="2" />
+                    <path d="M 47 63 Q 50 61 53 63" fill="none" stroke-width="1.5" />
+                    <!-- 網點葉片 -->
+                    <circle cx="34" cy="28" r="15" fill="url(#dither-pattern-fairy)" stroke-width="2" />
+                    <circle cx="66" cy="28" r="15" fill="url(#dither-pattern-fairy)" stroke-width="2" />
+                    <circle cx="50" cy="24" r="17" fill="var(--paper)" stroke-width="2" />
+                    <circle cx="34" cy="28" r="15" fill="none" stroke-width="2" />
+                    <circle cx="66" cy="28" r="15" fill="none" stroke-width="2" />
+                    <path d="M 45 22 Q 50 25 55 22 M 30 28 C 25 32, 28 36, 35 34" fill="none" stroke-width="1.5" stroke-dasharray="2 2" />
+                </svg>`,
+
+            'Cavern Golem': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- 左肩甲 -->
+                    <polygon points="12 40, 28 28, 38 48, 25 65, 12 55" fill="var(--paper)" stroke-width="2" />
+                    <polygon points="12 40, 28 28, 38 48, 25 65, 12 55" fill="url(#dither-pattern-fairy)" style="opacity:0.4;" />
+                    <!-- 右肩甲 -->
+                    <polygon points="88 40, 72 28, 62 48, 75 65, 88 55" fill="var(--paper)" stroke-width="2" />
+                    <polygon points="88 40, 72 28, 62 48, 75 65, 88 55" fill="url(#dither-pattern-fairy)" style="opacity:0.4;" />
+                    <!-- 身體主石塊 -->
+                    <polygon points="30 25, 70 23, 78 55, 65 82, 35 82, 22 55" fill="var(--paper)" stroke-width="2" />
+                    <polygon points="22 55, 35 82, 65 82, 78 55, 50 63" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- 石紋裂痕 -->
+                    <path d="M 30 25 L 45 42 L 35 55 M 70 23 L 58 40 L 65 60 L 52 68 M 35 82 L 48 70" fill="none" stroke-width="1.5" />
+                    <!-- 核心單眼符文 -->
+                    <polygon points="50 33, 57 43, 50 53, 43 43" fill="var(--paper)" stroke-width="2" />
+                    <circle cx="50" cy="43" r="1.5" fill="currentColor" />
+                    <path d="M 45 43 H 34 M 55 43 H 66" stroke-width="2.5" stroke-dasharray="2 2" />
+                </svg>`,
+
+            'Castle Monarch': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- 披風殘破下擺 (網點陰影) -->
+                    <path d="M 30 45 L 14 88 Q 50 82 86 88 L 70 45 Z" fill="url(#dither-pattern-fairy)" stroke-width="2" />
+                    <path d="M 35 48 L 22 80 Q 50 75 78 80 L 65 48 Z" fill="var(--paper)" stroke-width="1.5" />
+                    <!-- 肩鎧甲 -->
+                    <path d="M 28 42 C 35 40, 42 45, 50 45 C 58 45, 65 40, 72 42 L 65 52 L 35 52 Z" fill="var(--paper)" stroke-width="2" />
+                    <!-- 骷髏臉部與王冠 -->
+                    <path d="M 38 35 C 38 25, 62 25, 62 35 C 62 43, 38 43, 38 35 Z" fill="var(--paper)" stroke-width="2" />
+                    <!-- 骷髏眼窩 -->
+                    <polygon points="41 33, 48 35, 46 38, 42 37" fill="currentColor" />
+                    <circle cx="44.5" cy="35.5" r="0.8" fill="var(--paper)" />
+                    <polygon points="59 33, 52 35, 54 38, 58 37" fill="currentColor" />
+                    <circle cx="55.5" cy="35.5" r="0.8" fill="var(--paper)" />
+                    <!-- 鼻孔與牙齒 -->
+                    <polygon points="50 38, 48 41, 52 41" fill="currentColor" />
+                    <path d="M 44 43 H 56 M 46 41 V 45 M 50 41 V 45 M 54 41 V 45" stroke-width="1.5" />
+                    <!-- 尖刺皇冠 -->
+                    <polygon points="34 26, 42 12, 50 20, 58 12, 66 26, 50 28" fill="var(--paper)" stroke-width="2" />
+                    <polygon points="48 20, 50 16, 52 20, 50 24" fill="currentColor" />
+                    <circle cx="38" cy="24" r="1.5" fill="currentColor" stroke="none" />
+                    <circle cx="62" cy="24" r="1.5" fill="currentColor" stroke="none" />
+                </svg>`,
+
+            'Volcanic Dragon': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- 後方龍翼 (網點覆蓋) -->
+                    <path d="M 40 45 C 20 20, 5 35, 12 65 C 25 58, 30 55, 42 50" fill="url(#dither-pattern-fairy)" stroke-width="1.5" />
+                    <path d="M 60 45 C 80 20, 95 35, 88 65 C 75 58, 70 55, 58 50" fill="url(#dither-pattern-fairy)" stroke-width="1.5" />
+                    <!-- 龍角 -->
+                    <path d="M 38 32 Q 22 18 16 26 Q 26 32 35 36" fill="var(--paper)" stroke-width="2" />
+                    <path d="M 38 32 Q 22 18 16 26 Q 26 32 35 36" fill="url(#dither-pattern-fairy)" style="opacity:0.6;" />
+                    <path d="M 62 32 Q 78 18 84 26 Q 74 32 65 36" fill="var(--paper)" stroke-width="2" />
+                    <path d="M 62 32 Q 78 18 84 26 Q 74 32 65 36" fill="url(#dither-pattern-fairy)" style="opacity:0.6;" />
+                    <!-- 頭部與鼻吻 -->
+                    <path d="M 34 35 L 50 25 L 66 35 L 60 62 L 50 78 L 40 62 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- 憤怒龍眼 -->
+                    <polygon points="37 42, 47 45, 43 49" fill="currentColor" />
+                    <polygon points="63 42, 53 45, 57 49" fill="currentColor" />
+                    <!-- 鼻孔 -->
+                    <ellipse cx="46" cy="68" rx="1.5" ry="1.2" fill="currentColor" stroke="none" />
+                    <ellipse cx="54" cy="68" rx="1.5" ry="1.2" fill="currentColor" stroke="none" />
+                    <!-- 利齒與下顎 -->
+                    <path d="M 40 56 Q 50 62 60 56" fill="none" stroke-width="2" />
+                    <polygon points="43 57, 45 61, 47 58" fill="currentColor" stroke="none" />
+                    <polygon points="57 57, 55 61, 53 58" fill="currentColor" stroke="none" />
+                    <!-- 頸部鱗片 (網點) -->
+                    <path d="M 42 75 L 46 88 H 54 L 58 75 Z" fill="url(#dither-pattern-fairy)" stroke-width="1.5" />
+                </svg>`,
+
+            'Void Specter': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- 虛空法陣背景 -->
+                    <circle cx="50" cy="50" r="42" fill="url(#dither-pattern-fairy)" stroke-width="1.5" stroke-dasharray="3 3" />
+                    <!-- 懸浮斗篷衣褶 -->
+                    <path d="M 32 30 C 20 40, 15 65, 26 88 C 34 82, 44 86, 50 82 C 56 86, 66 82, 74 88 C 85 65, 80 40, 68 30 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 30 45 C 24 55, 22 72, 32 83 M 70 45 C 76 55, 78 72, 68 83" fill="none" stroke-width="1.5" stroke-dasharray="3 2" />
+                    <path d="M 40 80 Q 50 75 60 80" fill="none" stroke-width="1.5" />
+                    <!-- 兜帽黑面 -->
+                    <path d="M 38 32 C 38 20, 62 20, 62 32 C 62 48, 38 48, 38 32 Z" fill="currentColor" />
+                    <!-- 虛空核心單眼 (金色亮眼在黑白下為白色) -->
+                    <polygon points="50 24, 55 30, 50 36, 45 30" fill="var(--paper)" stroke="none" />
+                    <circle cx="50" cy="30" r="1.5" fill="var(--accent)" stroke="none" />
+                    <!-- 漂浮星光 -->
+                    <circle cx="20" cy="24" r="2.5" fill="currentColor" />
+                    <circle cx="80" cy="24" r="2.5" fill="currentColor" />
+                    <circle cx="50" cy="88" r="1.5" fill="currentColor" />
+                    <polygon points="18 48, 20 52, 22 48, 20 44" fill="currentColor" stroke="none" />
+                    <polygon points="82 48, 80 52, 78 48, 80 44" fill="currentColor" stroke="none" />
+                </svg>`,
+
+            'Slime': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Body -->
+                    <path d="M 15 70 C 15 40, 35 25, 50 25 C 65 25, 85 40, 85 70 C 85 78, 70 82, 50 82 C 30 82, 15 78, 15 70 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Halftone shadow at lower body -->
+                    <path d="M 15 70 C 25 76, 40 78, 50 78 C 60 78, 75 76, 85 70 C 85 78, 70 82, 50 82 C 30 82, 15 78, 15 70 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Eyes -->
+                    <circle cx="38" cy="54" r="3" fill="currentColor" stroke="none" />
+                    <circle cx="36.5" cy="52.5" r="1" fill="var(--paper)" stroke="none" />
+                    <circle cx="62" cy="54" r="3" fill="currentColor" stroke="none" />
+                    <circle cx="60.5" cy="52.5" r="1" fill="var(--paper)" stroke="none" />
+                    <!-- Mouth -->
+                    <path d="M 47 62 Q 50 65 53 62" fill="none" stroke-width="1.8" />
+                    <!-- Bubble details on top -->
+                    <circle cx="28" cy="38" r="2" fill="none" stroke-width="1.2" />
+                    <circle cx="72" cy="42" r="1.5" fill="none" stroke-width="1.2" />
+                </svg>`,
+
+            'Bat': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Wings Outstretched (Halftone pattern) -->
+                    <path d="M 38 46 Q 22 28, 6 34 Q 18 52, 24 58 Q 30 54, 38 52 Z" fill="url(#dither-pattern-fairy)" stroke-width="2" />
+                    <path d="M 62 46 Q 78 28, 94 34 Q 82 52, 76 58 Q 70 54, 62 52 Z" fill="url(#dither-pattern-fairy)" stroke-width="2" />
+                    <!-- Wing Bones -->
+                    <path d="M 38 46 Q 22 28, 6 34 M 38 46 Q 24 45, 24 58 M 38 46 Q 30 50, 38 52" fill="none" stroke-width="2" />
+                    <path d="M 62 46 Q 78 28, 94 34 M 62 46 Q 76 45, 76 58 M 62 46 Q 70 50, 62 52" fill="none" stroke-width="2" />
+                    <!-- Body and Head -->
+                    <path d="M 40 45 L 35 30 L 45 38 L 55 38 L 65 30 L 60 45 C 62 55, 38 55, 38 45 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Face (angry eyes & fangs) -->
+                    <polygon points="41 43, 45 45, 43 47" fill="currentColor" stroke="none" />
+                    <polygon points="59 43, 55 45, 57 47" fill="currentColor" stroke="none" />
+                    <polygon points="48 50, 50 53, 52 50" fill="currentColor" stroke="none" />
+                </svg>`,
+
+            'Rat': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Tail -->
+                    <path d="M 78 74 C 88 72, 92 84, 85 88 C 81 90, 83 93, 88 90 C 94 86, 92 68, 76 68" fill="none" stroke-width="2" />
+                    <!-- Body -->
+                    <path d="M 18 54 C 25 35, 48 35, 66 42 C 78 48, 80 65, 78 76 L 26 76 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Shadow on back -->
+                    <path d="M 38 40 C 52 42, 68 47, 78 60 C 78 70, 78 76, 78 76 L 50 76 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Ears -->
+                    <ellipse cx="48" cy="36" rx="7" ry="9" fill="var(--paper)" stroke-width="2" />
+                    <ellipse cx="48" cy="36" rx="4" ry="6" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Eye -->
+                    <circle cx="30" cy="48" r="2" fill="currentColor" stroke="none" />
+                    <!-- Snout & Whiskers -->
+                    <circle cx="17" cy="54" r="1.5" fill="currentColor" stroke="none" />
+                    <path d="M 22 55 L 10 57 M 22 55 L 12 61 M 22 55 L 12 51" fill="none" stroke-width="1.2" />
+                    <!-- Paws -->
+                    <path d="M 28 76 C 28 79, 25 81, 23 81 M 68 76 C 68 80, 72 82, 74 82" fill="none" stroke-width="2" />
+                </svg>`,
+
+            'Wolf': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Ears -->
+                    <polygon points="25 38, 16 12, 34 26" fill="var(--paper)" stroke-width="2" />
+                    <polygon points="25 38, 16 12, 34 26" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <polygon points="75 38, 84 12, 66 26" fill="var(--paper)" stroke-width="2" />
+                    <polygon points="75 38, 84 12, 66 26" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Main Head -->
+                    <path d="M 22 42 L 50 22 L 78 42 L 72 68 L 50 82 L 28 68 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Snout -->
+                    <path d="M 36 58 L 50 82 L 64 58 Z" fill="var(--paper)" stroke-width="2" />
+                    <polygon points="46 76, 50 82, 54 76" fill="currentColor" stroke="none" />
+                    <!-- Eyes (Angry) -->
+                    <polygon points="32 44, 43 47, 36 51" fill="currentColor" stroke="none" />
+                    <polygon points="68 44, 57 47, 64 51" fill="currentColor" stroke="none" />
+                    <!-- Snarl line -->
+                    <path d="M 42 55 Q 50 52 58 55" fill="none" stroke-width="1.8" />
+                    <!-- Neck dither shadow -->
+                    <path d="M 28 68 L 50 82 L 72 68 L 64 88 H 36 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Cheek fur decoration -->
+                    <path d="M 22 42 L 14 52 L 25 55 M 78 42 L 86 52 L 75 55" fill="none" stroke-width="1.8" />
+                </svg>`,
+
+            'Orc': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Shoulders/Armor -->
+                    <path d="M 12 85 C 18 60, 30 55, 35 55 L 65 55 C 70 55, 82 60, 88 85 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 12 85 C 18 60, 30 55, 35 55 L 65 55" fill="none" stroke-width="2" />
+                    <!-- Head & Jaw -->
+                    <path d="M 28 32 C 28 16, 72 16, 72 32 C 72 55, 28 55, 28 32 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Neck/Chest Dither shadow -->
+                    <path d="M 34 54 L 34 65 C 34 74, 66 74, 66 65 L 66 54 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Pig Nose -->
+                    <ellipse cx="50" cy="44" rx="5" ry="3.5" fill="var(--paper)" stroke-width="2" />
+                    <circle cx="47" cy="44" r="1" fill="currentColor" stroke="none" />
+                    <circle cx="53" cy="44" r="1" fill="currentColor" stroke="none" />
+                    <!-- Nose Ring -->
+                    <path d="M 47 48 A 3.5 3.5 0 1 0 53 48" fill="none" stroke-width="1.5" />
+                    <!-- Eyes & Brow Ridge -->
+                    <path d="M 32 32 L 50 36 L 68 32" fill="none" stroke-width="3.5" />
+                    <circle cx="40" cy="39" r="1.5" fill="currentColor" stroke="none" />
+                    <circle cx="60" cy="39" r="1.5" fill="currentColor" stroke="none" />
+                    <!-- Mouth & Tusks -->
+                    <path d="M 38 50 Q 50 54 62 50" fill="none" stroke-width="2" />
+                    <polygon points="39 50, 42 44, 45 49" fill="var(--paper)" stroke-width="1.8" />
+                    <polygon points="61 50, 58 44, 55 49" fill="var(--paper)" stroke-width="1.8" />
+                </svg>`,
+
+            'Imp': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Wings -->
+                    <path d="M 35 56 Q 15 44, 20 64 Q 28 61, 35 62 Z" fill="url(#dither-pattern-fairy)" stroke-width="1.5" />
+                    <path d="M 65 56 Q 85 44, 80 64 Q 72 61, 65 62 Z" fill="url(#dither-pattern-fairy)" stroke-width="1.5" />
+                    <!-- Tail -->
+                    <path d="M 58 72 Q 74 72, 72 55" fill="none" stroke-width="2.2" />
+                    <polygon points="72 55, 68 59, 76 59" fill="currentColor" stroke="none" />
+                    <!-- Horns -->
+                    <path d="M 40 26 Q 30 18, 24 22 Q 33 30, 42 30" fill="var(--paper)" stroke-width="2" />
+                    <path d="M 60 26 Q 70 18, 76 22 Q 67 30, 58 30" fill="var(--paper)" stroke-width="2" />
+                    <!-- Body -->
+                    <path d="M 42 52 L 34 76 L 66 76 L 58 52 Z" fill="var(--paper)" stroke-width="2" />
+                    <path d="M 42 52 L 50 76 L 58 52 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Head -->
+                    <circle cx="50" cy="38" r="14" fill="var(--paper)" stroke-width="2" />
+                    <!-- Face (Devious Grin) -->
+                    <polygon points="41 35, 48 39, 44 41" fill="currentColor" stroke="none" />
+                    <polygon points="59 35, 52 39, 56 41" fill="currentColor" stroke="none" />
+                    <path d="M 43 45 Q 50 51 57 45" fill="none" stroke-width="2" />
+                    <polygon points="46 46, 48 49, 49 47" fill="currentColor" stroke="none" />
+                    <polygon points="54 46, 52 49, 51 47" fill="currentColor" stroke="none" />
+                </svg>`,
+
+            'Mage': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Staff (Backpack layer) -->
+                    <path d="M 78 30 L 84 90" stroke="var(--ink)" stroke-width="2.5" />
+                    <!-- Staff Gem -->
+                    <polygon points="78 30, 73 23, 77 16, 83 16, 87 23, 83 30" fill="var(--paper)" stroke-width="2" />
+                    <circle cx="80" cy="23" r="3" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Cloak / Hood -->
+                    <path d="M 50 14 C 32 14, 26 34, 26 50 C 26 65, 14 88, 14 90 C 38 85, 62 85, 86 90 C 86 88, 74 65, 74 50 C 74 34, 68 14, 50 14 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Inner hood shadow (mysterious black void) -->
+                    <path d="M 34 44 C 34 30, 42 20, 50 20 C 58 20, 66 30, 66 44 C 66 54, 34 54, 34 44 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Glowing eyes -->
+                    <circle cx="43" cy="40" r="1.8" fill="var(--paper)" stroke="none" />
+                    <circle cx="57" cy="40" r="1.8" fill="var(--paper)" stroke="none" />
+                    <!-- Cloak folds -->
+                    <path d="M 26 50 C 35 55, 65 55, 74 50" fill="none" stroke-width="1.8" />
+                    <path d="M 38 54 L 38 86 M 62 54 L 62 86" fill="none" stroke-width="1.2" stroke-dasharray="3 3" />
+                </svg>`,
+
+            'Ghost': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Floating body -->
+                    <path d="M 50 14 C 30 14, 24 32, 24 52 C 24 68, 34 72, 28 88 C 40 82, 50 86, 58 80 C 65 88, 70 82, 76 88 C 76 75, 76 68, 76 52 C 76 32, 70 14, 50 14 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Translucent dither fading tail -->
+                    <path d="M 24 66 C 24 74, 34 76, 28 88 C 40 82, 50 86, 58 80 C 65 88, 70 82, 76 88 C 76 75, 76 66, 76 66 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Hollow eyes -->
+                    <ellipse cx="40" cy="40" rx="3" ry="5.5" fill="currentColor" stroke="none" />
+                    <ellipse cx="60" cy="40" rx="3" ry="5.5" fill="currentColor" stroke="none" />
+                    <!-- Hollow mouth (screaming) -->
+                    <ellipse cx="50" cy="56" rx="3.5" ry="6.5" fill="currentColor" stroke="none" />
+                    <!-- Floating hands -->
+                    <path d="M 24 48 Q 12 43, 16 36 M 76 48 Q 88 43, 84 36" fill="none" stroke-width="2" />
+                </svg>`,
+
+            'Cube': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Hover energy ring -->
+                    <ellipse cx="50" cy="85" rx="35" ry="8" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="4 4" style="opacity: 0.7;" />
+                    <!-- Left face (Light dither) -->
+                    <polygon points="18 32, 50 48, 50 80, 18 64" fill="var(--paper)" stroke-width="2.5" />
+                    <polygon points="18 32, 50 48, 50 80, 18 64" fill="url(#dither-pattern-fairy)" stroke="none" style="opacity: 0.5;" />
+                    <!-- Right face (Heavy dither) -->
+                    <polygon points="50 48, 82 32, 82 64, 50 80" fill="var(--paper)" stroke-width="2.5" />
+                    <polygon points="50 48, 82 32, 82 64, 50 80" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Top face (Clear white) -->
+                    <polygon points="50 16, 82 32, 50 48, 18 32" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Central giant glowing eye -->
+                    <ellipse cx="50" cy="48" rx="7" ry="5.5" fill="var(--paper)" stroke-width="2" />
+                    <circle cx="50" cy="48" r="2.2" fill="currentColor" stroke="none" />
+                    <!-- Geometric surface crack lines -->
+                    <path d="M 50 16 L 50 26 M 18 32 L 30 35 M 82 32 L 72 36" fill="none" stroke-width="1.8" />
+                    <path d="M 28 54 L 38 60 L 32 72 M 72 54 L 64 62 L 68 70" fill="none" stroke-width="1.5" />
+                </svg>`,
+
+            'Drake': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Wings -->
+                    <path d="M 28 62 Q 10 56, 16 74 Z" fill="url(#dither-pattern-fairy)" stroke-width="1.5" />
+                    <path d="M 72 62 Q 90 56, 84 74 Z" fill="url(#dither-pattern-fairy)" stroke-width="1.5" />
+                    <!-- Horns -->
+                    <path d="M 38 30 Q 32 16, 26 20 M 62 30 Q 68 16, 74 20" fill="none" stroke-width="2" />
+                    <!-- Tail -->
+                    <path d="M 66 82 Q 78 84, 82 72 Q 80 66, 86 64" fill="none" stroke-width="2" />
+                    <!-- Body -->
+                    <path d="M 38 52 L 28 84 C 45 90, 55 90, 72 84 L 62 52 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Belly scales (dither shadow) -->
+                    <path d="M 44 55 Q 50 53 56 55 L 62 80 Q 50 86 38 80 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Head -->
+                    <path d="M 35 44 C 35 26, 65 26, 65 44 C 65 53, 58 58, 50 58 C 42 58, 35 53, 35 44 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Nose Horn -->
+                    <polygon points="50 45, 48 41, 52 41" fill="var(--paper)" stroke-width="2" />
+                    <!-- Eyes (Cute but angry) -->
+                    <ellipse cx="43" cy="38" rx="2.5" ry="3.5" fill="currentColor" stroke="none" />
+                    <ellipse cx="57" cy="38" rx="2.5" ry="3.5" fill="currentColor" stroke="none" />
+                    <circle cx="42" cy="37" r="0.8" fill="var(--paper)" stroke="none" />
+                    <circle cx="56" cy="37" r="0.8" fill="var(--paper)" stroke="none" />
+                    <path d="M 38 33 L 45 35 M 62 33 L 55 35" fill="none" stroke-width="1.8" />
+                    <!-- Smiling mouth with small fangs -->
+                    <path d="M 44 49 Q 50 53 56 49" fill="none" stroke-width="1.8" />
+                    <polygon points="46 49, 47 52, 48 49" fill="currentColor" stroke="none" />
+                    <polygon points="54 49, 53 52, 52 49" fill="currentColor" stroke="none" />
+                    <!-- Small flame puff -->
+                    <path d="M 49 53 L 47 62 L 51 60 L 53 64 L 54 57" fill="none" stroke-width="1" />
+                </svg>`,
+
+            'Shady Guy': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Mysterious Hood -->
+                    <path d="M 50 12 C 32 12, 22 28, 22 48 C 22 55, 25 60, 28 65" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 50 12 C 68 12, 78 28, 78 48 C 78 55, 75 60, 72 65" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Inside shadow (dither) -->
+                    <path d="M 50 15 C 36 15, 26 28, 26 48 C 26 53, 30 57, 34 60 C 34 50, 40 40, 50 40 C 60 40, 66 50, 66 60 C 70 57, 74 53, 74 48 C 74 28, 64 15, 50 15 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Face peaking out of the hood -->
+                    <path d="M 34 60 C 34 50, 40 40, 50 40 C 60 40, 66 50, 66 60 C 66 70, 34 70, 34 60 Z" fill="var(--paper)" stroke-width="2" />
+                    <!-- Mask covering mouth/nose -->
+                    <path d="M 38 56 Q 50 54 62 56 L 60 68 Q 50 72 40 68 Z" fill="var(--paper)" stroke-width="2" />
+                    <path d="M 42 60 L 58 60 M 44 64 L 56 64" fill="none" stroke-width="1.2" />
+                    <!-- Shady eyes looking sideways -->
+                    <path d="M 42 48 Q 46 46 50 48 M 58 48 Q 54 46 50 48" fill="none" stroke-width="1.5" />
+                    <circle cx="43" cy="49" r="1" fill="currentColor" stroke="none" />
+                    <circle cx="57" cy="49" r="1" fill="currentColor" stroke="none" />
+                    <!-- High collar coat -->
+                    <path d="M 20 85 C 28 72, 38 68, 38 68 L 62 68 C 62 68, 72 72, 80 85 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 32 68 L 24 88 M 68 68 L 76 88" fill="none" stroke-width="2" />
+                    <!-- Hanging mysterious pocketwatch or amulet -->
+                    <path d="M 50 68 L 50 78" fill="none" stroke-width="1.5" stroke-dasharray="2 2" />
+                    <circle cx="50" cy="81" r="3.5" fill="var(--paper)" stroke-width="2" />
+                    <circle cx="50" cy="81" r="1.2" fill="currentColor" stroke="none" />
+                </svg>`,
+
+            'Old Shrine': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Stone Pedestal Base -->
+                    <polygon points="20 88, 80 88, 74 76, 26 76" fill="var(--paper)" stroke-width="2.5" />
+                    <polygon points="25 76, 75 76, 70 60, 30 60" fill="var(--paper)" stroke-width="2.5" />
+                    <polygon points="20 88, 80 88, 74 76, 26 76" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Crack lines on stone base -->
+                    <path d="M 28 82 L 36 80 L 32 76 M 68 85 L 72 80" fill="none" stroke-width="1.5" />
+                    <!-- Torii/Shrine Pillar Pillars -->
+                    <rect x="36" y="38" width="6" height="22" fill="var(--paper)" stroke-width="2" />
+                    <rect x="58" y="38" width="6" height="22" fill="var(--paper)" stroke-width="2" />
+                    <!-- Inner alcove (dithered void) -->
+                    <rect x="42" y="38" width="16" height="22" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Shrine Roof -->
+                    <polygon points="26 38, 74 38, 82 24, 18 24" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 18 24 Q 50 20 82 24 L 76 38 Q 50 36 24 38 Z" fill="url(#dither-pattern-fairy)" stroke="none" style="opacity: 0.5;" />
+                    <polygon points="46 20, 54 20, 50 14" fill="currentColor" stroke="none" />
+                    <!-- Ethereal Glowing Orb -->
+                    <circle cx="50" cy="46" r="5" fill="var(--paper)" stroke-width="2" />
+                    <circle cx="50" cy="46" r="2" fill="var(--accent)" stroke="none" />
+                    <!-- Light rays -->
+                    <path d="M 50 35 V 38 M 50 54 V 57 M 40 46 H 42 M 58 46 H 60 M 43 39 L 45 41 M 57 39 L 55 41 M 43 53 L 45 51 M 57 53 L 55 51" fill="none" stroke-width="1" stroke-dasharray="2 2" />
+                    <!-- Hanging Rope/Bell decoration -->
+                    <path d="M 50 24 L 50 30" fill="none" stroke-width="1.5" />
+                </svg>`,
+
+            'Plague Doc': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Top Hat -->
+                    <polygon points="28 26, 72 26, 66 12, 34 12" fill="var(--paper)" stroke-width="2.5" />
+                    <polygon points="18 30, 82 30, 80 26, 20 26" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 34 26 L 30 14 H 70 L 66 26 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Beak Mask (Large Curved) -->
+                    <path d="M 50 30 C 50 30, 36 34, 36 50 C 36 58, 42 62, 50 62 C 50 62, 53 58, 55 52 C 57 46, 78 48, 82 52 C 72 58, 62 64, 50 65" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 55 52 C 57 46, 78 48, 82 52 Q 68 56 50 65" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Big Goggles -->
+                    <circle cx="46" cy="42" r="6.5" fill="var(--paper)" stroke-width="2" />
+                    <circle cx="46" cy="42" r="3" fill="currentColor" stroke="none" />
+                    <path d="M 40 42 H 36" fill="none" stroke-width="2" />
+                    <!-- Cloak/Cowl -->
+                    <path d="M 36 62 C 30 65, 20 72, 16 90 H 84 C 80 72, 70 65, 64 62" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Shadow folds under beak and cowl -->
+                    <path d="M 36 62 C 36 62, 50 74, 64 62 L 72 90 H 28 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Buttons -->
+                    <circle cx="50" cy="74" r="1.8" fill="currentColor" stroke="none" />
+                    <circle cx="50" cy="82" r="1.8" fill="currentColor" stroke="none" />
+                </svg>`,
+
+            'Chest': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Upper Lid (Tilted Open) -->
+                    <path d="M 16 34 L 14 18 Q 50 10 86 18 L 84 34 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 14 18 Q 50 10 86 18 L 80 24 Q 50 16 20 24 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Iron Bands on Lid -->
+                    <path d="M 32 14 L 33 34 M 68 14 L 67 34" stroke-width="1.8" />
+                    <!-- Inside Void (Mouth) -->
+                    <polygon points="16 34, 84 34, 76 66, 24 66" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Giant Mimic Eye in the void -->
+                    <ellipse cx="50" cy="46" rx="8" ry="6.5" fill="var(--paper)" stroke-width="2" />
+                    <circle cx="50" cy="46" r="3" fill="currentColor" stroke="none" />
+                    <circle cx="48" cy="44" r="1" fill="var(--paper)" stroke="none" />
+                    <!-- Sharp Teeth -->
+                    <polygon points="20 34, 25 40, 28 34, 33 41, 37 34, 42 42, 46 34, 52 42, 57 34, 63 42, 67 34, 72 40, 75 34, 80 38, 83 34" fill="var(--paper)" stroke-width="1.5" />
+                    <polygon points="26 62, 30 55, 34 62, 39 54, 43 62, 49 53, 54 62, 60 54, 65 62, 70 56, 74 62" fill="var(--paper)" stroke-width="1.5" />
+                    <!-- Creepy Tongue -->
+                    <path d="M 44 54 Q 30 65 42 78 Q 50 82 52 70 Q 55 60 48 54" fill="var(--paper)" stroke-width="2" />
+                    <path d="M 44 54 Q 30 65 42 78 Q 50 82 52 70 Z" fill="url(#dither-pattern-fairy)" stroke="none" style="opacity: 0.6;" />
+                    <path d="M 40 68 Q 44 72 46 76" fill="none" stroke-width="1" />
+                    <!-- Chest Base -->
+                    <path d="M 16 34 H 84 L 78 84 H 22 Z" fill="none" stroke-width="2.5" />
+                    <path d="M 16 34 L 22 84 M 84 34 L 78 84" fill="none" stroke-width="2.5" />
+                    <!-- Metal corners on base -->
+                    <polygon points="22 84, 32 84, 28 72, 21 75" fill="currentColor" />
+                    <polygon points="78 84, 68 84, 72 72, 79 75" fill="currentColor" />
+                </svg>`,
+
+            'Tiny Dragon': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Tiny wings -->
+                    <path d="M 32 50 Q 14 38, 22 56 Z" fill="url(#dither-pattern-fairy)" stroke-width="1.5" />
+                    <path d="M 68 50 Q 86 38, 78 56 Z" fill="url(#dither-pattern-fairy)" stroke-width="1.5" />
+                    <!-- Tail with fire tip -->
+                    <path d="M 62 76 Q 78 80, 76 68" fill="none" stroke-width="2" />
+                    <path d="M 76 68 Q 80 60 76 56 Q 72 62 76 68 Z" fill="currentColor" />
+                    <!-- Cute chubby body -->
+                    <path d="M 38 52 L 32 78 C 45 84, 55 84, 68 78 L 62 52 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Chubby Belly (dither shadow) -->
+                    <path d="M 42 54 Q 50 52 58 54 L 62 76 Q 50 82 38 76 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Feet -->
+                    <circle cx="36" cy="80" r="3" fill="var(--paper)" stroke-width="2" />
+                    <circle cx="64" cy="80" r="3" fill="var(--paper)" stroke-width="2" />
+                    <!-- Cute Head -->
+                    <circle cx="50" cy="38" r="15" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Tiny curved horns -->
+                    <path d="M 40 25 Q 36 12, 30 18 M 60 25 Q 64 12, 70 18" fill="none" stroke-width="2" />
+                    <!-- Big Innocent Eyes -->
+                    <ellipse cx="43" cy="36" rx="3" ry="4.2" fill="currentColor" stroke="none" />
+                    <ellipse cx="57" cy="36" rx="3" ry="4.2" fill="currentColor" stroke="none" />
+                    <circle cx="42" cy="34" r="1" fill="var(--paper)" stroke="none" />
+                    <circle cx="56" cy="34" r="1" fill="var(--paper)" stroke="none" />
+                    <!-- Smiling cute mouth -->
+                    <path d="M 47 45 Q 50 48 53 45" fill="none" stroke-width="1.8" />
+                    <!-- Puffs of fire -->
+                    <path d="M 49 49 L 46 56 L 50 53 L 53 58 L 54 51" fill="none" stroke-width="1" />
+                    <circle cx="45" cy="58" r="1" fill="currentColor" stroke="none" />
+                    <circle cx="55" cy="61" r="0.8" fill="currentColor" stroke="none" />
+                </svg>`,
+
+            'Injured Puppy': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Wagging Tail -->
+                    <path d="M 72 68 Q 88 64, 82 54" fill="none" stroke-width="2.2" />
+                    <path d="M 85 52 L 88 55 M 82 48 L 86 50 M 78 46 L 80 50" fill="none" stroke-width="1" />
+                    <!-- Puppy Body (Sitting) -->
+                    <path d="M 32 54 L 28 80 C 35 84, 65 84, 72 80 L 68 54 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 32 54 L 50 72 L 68 54" fill="none" stroke-width="1.5" />
+                    <!-- Dither shadow on back/bottom -->
+                    <path d="M 48 64 C 60 66, 68 72, 70 80 L 62 82 C 55 76, 48 70, 48 64 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Front Paws -->
+                    <rect x="38" y="72" width="6" height="10" rx="2" fill="var(--paper)" stroke-width="2" />
+                    <rect x="56" y="72" width="6" height="10" rx="2" fill="var(--paper)" stroke-width="2" />
+                    <!-- Puppy Head -->
+                    <circle cx="50" cy="38" r="16" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Floppy Ears -->
+                    <path d="M 35 28 C 30 28, 26 36, 28 46 C 30 52, 37 46, 37 40" fill="var(--paper)" stroke-width="2" />
+                    <path d="M 65 28 C 70 28, 74 36, 72 46 C 70 52, 63 46, 63 40" fill="var(--paper)" stroke-width="2" />
+                    <!-- Head Bandage (Injured) -->
+                    <polygon points="34 32, 66 38, 64 44, 35 38" fill="var(--paper)" stroke-width="2" />
+                    <path d="M 40 33 L 42 41 M 58 37 L 56 45 M 48 30 L 48 44" stroke-width="1" />
+                    <!-- Big Sad Eyes -->
+                    <ellipse cx="42" cy="46" rx="2.5" ry="3.5" fill="currentColor" stroke="none" />
+                    <ellipse cx="58" cy="46" rx="2.5" ry="3.5" fill="currentColor" stroke="none" />
+                    <circle cx="41" cy="45" r="0.8" fill="var(--paper)" stroke="none" />
+                    <circle cx="57" cy="45" r="0.8" fill="var(--paper)" stroke="none" />
+                    <path d="M 38 41 Q 42 39 45 42 M 62 41 Q 58 39 55 42" stroke-width="1.2" />
+                    <!-- Dog Nose & Whimper Mouth -->
+                    <polygon points="48 51, 52 51, 50 54" fill="currentColor" />
+                    <path d="M 47 57 Q 50 55 53 57" fill="none" stroke-width="1.5" />
+                </svg>`,
+
+            'Food Truck': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Carriage Wheels -->
+                    <circle cx="32" cy="80" r="10" fill="var(--paper)" stroke-width="2.5" />
+                    <circle cx="32" cy="80" r="4" fill="currentColor" stroke="none" />
+                    <path d="M 32 70 V 90 M 22 80 H 42 M 25 73 L 39 87 M 25 87 L 39 73" fill="none" stroke-width="1" />
+                    <circle cx="68" cy="80" r="10" fill="var(--paper)" stroke-width="2.5" />
+                    <circle cx="68" cy="80" r="4" fill="currentColor" stroke="none" />
+                    <path d="M 68 70 V 90 M 58 80 H 78 M 61 73 L 75 87 M 61 87 L 75 73" fill="none" stroke-width="1" />
+                    <!-- Truck Body (Wooden Cart) -->
+                    <rect x="18" y="24" width="64" height="46" rx="3" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Wood Planks detail -->
+                    <path d="M 18 36 H 82 M 18 48 H 82 M 18 60 H 82" fill="none" stroke-width="1" stroke-dasharray="4 4" />
+                    <!-- Chimney and Smoke -->
+                    <rect x="70" y="10" width="6" height="14" fill="var(--paper)" stroke-width="2" />
+                    <path d="M 73 10 C 70 2, 85 -2, 78 -8 C 76 -2, 80 2, 73 10" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Canopy (Striped) -->
+                    <polygon points="14 24, 86 24, 80 34, 20 34" fill="var(--paper)" stroke-width="2" />
+                    <polygon points="14 24, 86 24, 80 34, 20 34" fill="url(#dither-pattern-fairy)" stroke="none" style="opacity: 0.5;" />
+                    <path d="M 26 24 L 28 34 M 38 24 L 38 34 M 50 24 L 50 34 M 62 24 L 62 34 M 74 24 L 72 34" fill="none" stroke-width="1.5" />
+                    <!-- Menu Sign with Bone -->
+                    <rect x="22" y="40" width="16" height="18" fill="var(--paper)" stroke-width="2" />
+                    <path d="M 26 49 C 24 47, 24 45, 26 45 C 28 45, 30 47, 32 49 C 34 47, 36 45, 38 45 C 40 45, 40 47, 38 49 L 35 52 L 38 55 C 40 57, 40 59, 38 59 C 36 59, 34 57, 32 55 C 30 57, 28 59, 26 59 C 24 59, 24 57, 26 55 Z" fill="none" stroke-width="1.2" />
+                    <!-- Service Counter window -->
+                    <rect x="44" y="38" width="32" height="20" fill="var(--paper)" stroke-width="2" />
+                    <!-- Inside Counter (heavy dither) -->
+                    <rect x="46" y="40" width="28" height="16" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Monster Decor: Eyes on Cart top -->
+                    <circle cx="36" cy="18" r="3" fill="var(--paper)" stroke-width="1.8" />
+                    <circle cx="36" cy="18" r="1" fill="currentColor" stroke="none" />
+                    <circle cx="46" cy="18" r="3" fill="var(--paper)" stroke-width="1.8" />
+                    <circle cx="46" cy="18" r="1" fill="currentColor" stroke="none" />
+                    <path d="M 32 24 Q 41 27 50 24" fill="none" stroke-width="1.5" />
+                </svg>`,
+
+            'Chef Master': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Giant Chef Hat -->
+                    <path d="M 35 30 C 30 30, 24 25, 28 15 C 32 5, 68 5, 72 15 C 76 25, 70 30, 65 30 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 35 30 H 65 L 62 38 H 38 Z" fill="var(--paper)" stroke-width="2" />
+                    <!-- Hat wrinkles (dither) -->
+                    <path d="M 36 24 C 36 12, 45 10, 48 16 C 52 10, 64 12, 64 24" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Chef Face & Beard -->
+                    <path d="M 36 38 C 36 38, 30 44, 30 52 C 30 60, 40 68, 50 68 C 60 68, 70 60, 70 52 C 70 44, 64 38, 64 38 Z" fill="var(--paper)" stroke-width="2" />
+                    <!-- Majestic mustache -->
+                    <path d="M 50 50 Q 30 45, 24 55 Q 35 55, 46 51 M 50 51 Q 70 45, 76 55 Q 65 55, 54 51" fill="currentColor" stroke="none" />
+                    <!-- Determination Eyes -->
+                    <polygon points="38 43, 46 45, 42 47" fill="currentColor" />
+                    <polygon points="62 43, 54 45, 58 47" fill="currentColor" />
+                    <path d="M 36 39 L 48 42 M 64 39 L 52 42" stroke-width="1.8" />
+                    <!-- Big Nose -->
+                    <ellipse cx="50" cy="46" rx="4.5" ry="3" fill="var(--paper)" stroke-width="1.5" />
+                    <!-- Chef Coat/Apron -->
+                    <path d="M 30 66 L 20 90 H 80 L 70 66 Z" fill="var(--paper)" stroke-width="2.5" />
+                    <path d="M 38 68 L 38 90 M 62 68 L 62 90" fill="none" stroke-width="1.5" />
+                    <!-- Frying Pan with sizzling steak -->
+                    <path d="M 12 76 H 32 L 30 84 H 14 Z" fill="var(--paper)" stroke-width="2" />
+                    <path d="M 12 76 H 32 L 30 84 H 14 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <path d="M 8 78 L 12 78" stroke-width="2.5" />
+                    <!-- Steak details -->
+                    <ellipse cx="22" cy="80" rx="6" ry="2.5" fill="var(--paper)" stroke-width="1.5" />
+                    <!-- Steam waves -->
+                    <path d="M 18 70 Q 20 64 18 60 M 24 71 Q 26 65 24 61 M 29 73 Q 30 67 28 63" fill="none" stroke-width="1" />
+                </svg>`,
+
+            'Grand Castle': `<svg class="eink-sprite" viewBox="0 0 100 100">
+                    <!-- Mountain background -->
+                    <polygon points="4 85, 28 42, 54 85" fill="var(--paper)" stroke-width="1.5" />
+                    <polygon points="4 85, 28 42, 54 85" fill="url(#dither-pattern-fairy)" stroke="none" style="opacity: 0.4;" />
+                    <polygon points="48 85, 74 38, 96 85" fill="var(--paper)" stroke-width="1.5" />
+                    <polygon points="48 85, 74 38, 96 85" fill="url(#dither-pattern-fairy)" stroke="none" style="opacity: 0.4;" />
+                    <!-- Castle Base/Wall -->
+                    <rect x="22" y="60" width="56" height="26" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Brick textures -->
+                    <path d="M 28 66 H 36 M 44 66 H 56 M 64 66 H 72 M 32 74 H 48 M 56 74 H 68 M 28 80 H 40 M 50 80 H 72" fill="none" stroke-width="1.2" />
+                    <!-- Gate -->
+                    <path d="M 42 86 V 72 C 42 66, 58 66, 58 72 V 86 Z" fill="var(--paper)" stroke-width="2" />
+                    <path d="M 42 86 V 72 C 42 66, 58 66, 58 72 V 86 Z" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Left Tower -->
+                    <rect x="24" y="38" width="10" height="22" fill="var(--paper)" stroke-width="2" />
+                    <polygon points="22 38, 36 38, 29 24" fill="var(--paper)" stroke-width="2" />
+                    <polygon points="22 38, 36 38, 29 24" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Right Tower -->
+                    <rect x="66" y="38" width="10" height="22" fill="var(--paper)" stroke-width="2" />
+                    <polygon points="64 38, 78 38, 71 24" fill="var(--paper)" stroke-width="2" />
+                    <polygon points="64 38, 78 38, 71 24" fill="url(#dither-pattern-fairy)" stroke="none" />
+                    <!-- Central Grand Keep Tower -->
+                    <rect x="40" y="30" width="20" height="30" fill="var(--paper)" stroke-width="2.5" />
+                    <!-- Crenellations -->
+                    <polygon points="38 30, 43 30, 43 26, 48 26, 48 30, 52 30, 52 26, 57 26, 57 30, 62 30" fill="var(--paper)" stroke-width="2" />
+                    <!-- Spire on central keep -->
+                    <polygon points="44 26, 56 26, 50 10" fill="var(--paper)" stroke-width="2" />
+                    <!-- Flag -->
+                    <path d="M 50 10 V 2 M 50 2 L 60 5 L 50 8" fill="currentColor" stroke-width="1.2" />
+                    <!-- Clouds -->
+                    <path d="M 12 18 Q 16 12 24 15 Q 30 10 36 16 L 36 18 Z" fill="var(--paper)" stroke-width="1" />
+                    <path d="M 68 18 Q 72 12 80 15 Q 86 10 92 16 L 92 18 Z" fill="var(--paper)" stroke-width="1" />
+                </svg>`,
+
+        };
+
+        // [SVG] 根據敵人名稱查找對應 SVG 圖形
+        function getSvgForEnemy(enemyName) {
+            const en = (typeof enemyName === 'string') ? enemyName : (enemyName.en || '');
+            // Direct match (bosses, fixed enemies)
+            if (SVG_ASSETS[en]) return SVG_ASSETS[en];
+            // Noun suffix match (random enemies: "Mad Slime" -> "Slime")
+            for (const noun of C_MONSTER_NAMES.Noun) {
+                if (en.endsWith(noun.en) && SVG_ASSETS[noun.en]) {
+                    return SVG_ASSETS[noun.en];
+                }
+            }
+            return null;
+        }
 
         // [7] 固定關卡 (Levels) - 雙語化
         C_LEVELS = {

@@ -1067,7 +1067,7 @@
         let C_RELICS = [], C_EVENTS = [], C_SKILLS = [], C_LEVELS = {}, C_CAMPFIRE = {}, C_VISUALS = {}, C_MONSTER_PARTS = {}, C_MONSTER_NAMES = {};
 
         const Data = {
-            SUIT_META: { 's': { sym: '♠', style: 'suit-black' }, 'h': { sym: '♥', style: 'suit-red' }, 'd': { sym: '♦', style: 'suit-red' }, 'c': { sym: '♣', style: 'suit-black' }, 'j': { sym: '🃏', style: 'suit-black' } },
+            SUIT_META: { 's': { sym: '♠', style: 'suit-black' }, 'h': { sym: '♥', style: 'suit-red' }, 'd': { sym: '♦', style: 'suit-red' }, 'c': { sym: '♣', style: 'suit-black' }, 'j': { sym: '🤡', style: 'suit-black' } },
             VALUES: { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14, 'JO': 15 },
             FIELD_FACTORS: [
                 { id: 'none', name: 'None', rate: 1.0, suit: null, icon: '-', desc: { en: 'Normal', zh: '無異常' } },
@@ -1683,7 +1683,7 @@
                                 html += `<div class="card-badge">${icon}</div>`;
                             }
                             if (c.rank === 'JO') {
-                                html += `<div class="joker-txt">JOKER</div><div class="suit-big">🃏</div><div class="joker-bot">JOKER</div>`;
+                                html += `<div class="joker-txt">JOKER</div><div class="suit-big">🤡</div><div class="joker-bot">JOKER</div>`;
                             } else {
                                 const meta = Data.SUIT_META[c.suit];
                                 html += `<div class="rank-txt ${meta.style}">${displayRank}</div><div class="suit-big ${meta.style}">${meta.sym}</div><div class="rank-bot ${meta.style}">${displayRank}</div>`;
@@ -1901,7 +1901,7 @@
                             cardEl.className = `m-card ${meta.style === 'suit-red' ? 'red' : 'black'}`;
                             // 判斷是否為鬼牌
                             if (c.r === 'JO') {
-                                cardEl.innerHTML = `<span>🃏</span>`;
+                                cardEl.innerHTML = `<span>🤡</span>`;
                             } else {
                                 cardEl.innerHTML = `<span class="m-card-rank">${c.r}</span><span>${meta.sym}</span>`;
                             }

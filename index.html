@@ -3639,6 +3639,7 @@
                             const enemy = Generator.genEnemy(this.state.stage || 4);
                             enemy.name = { en: 'Angry Chef', zh: '憤怒廚師' };
                             enemy.kao = '(╬ Ò﹏Ó)🔪';
+                            enemy.svgKey = 'Food Truck'; // 怪物餐車主人，用餐車圖示與廚神區隔
                             setTimeout(() => this.startBattle(enemy), 1500);
                             return;
                         }
@@ -3694,6 +3695,7 @@
                         const enemy = Generator.genEnemy(this.state.stage || 4);
                         enemy.name = { en: 'Grand Chef Master', zh: '傳奇廚神' };
                         enemy.kao = '(ง •̀_•́)ง🍳🔥';
+                        enemy.svgKey = 'Chef Master';
                         enemy.hp = Math.floor(enemy.hp * 1.5);
                         enemy.atk = Math.floor(enemy.atk * 1.2);
                         enemy.isElite = true;
@@ -4628,6 +4630,18 @@
                 return { name: name, dmg: dmg };
             },
 
+            // [修正] 清除一般戰鬥殘留在敵人區的狀態（名稱列、SVG 模式、蓄力閃爍），
+            // 供射龍門與解謎模式進場時呼叫，避免上一場戰鬥的畫面狀態外漏到小遊戲
+            resetEnemyZone: function () {
+                const eNameEl = document.getElementById('e-name');
+                if (eNameEl) eNameEl.innerHTML = '';
+                const eKaoEl = document.getElementById('e-kao');
+                if (eKaoEl) eKaoEl.classList.remove('charge-blink');
+                const enemyRow = eKaoEl ? eKaoEl.closest('.enemy-row') : null;
+                if (enemyRow) enemyRow.classList.remove('svg-mode');
+                this._renderedKaoEnemy = null; // 小遊戲會改寫 e-kao，下次戰鬥需重新注入
+            },
+
             renderUI: function () {
                 const f = this.state.field;
                 document.getElementById('deck-count').innerText = this.state.deck.length;
@@ -4675,6 +4689,7 @@
                 // ===== 解謎模式 UI =====
                 if (this.state.dragonGateMode) {
                     const dgPuzzle = this.state.dgPuzzle;
+                    this.resetEnemyZone(); // [修正] 清除上一場戰鬥殘留的名稱列與 svg-mode
 
                     // 隱藏戰鬥相關按鈕與狀態欄
                     const toHideDG = [
@@ -4740,6 +4755,7 @@
 
                 } else if (this.state.puzzleMode) {
                     const puzzle = this.state.puzzle;
+                    this.resetEnemyZone(); // [修正] 清除上一場戰鬥殘留的名稱列與 svg-mode
 
                     // 隱藏戰鬥相關按鈕與狀態欄
                     const toHide = [
@@ -4810,22 +4826,27 @@
                     if (eNameEl) eNameEl.innerHTML = nameHtml;
 
                     // Render kao: SVG first, kaomoji fallback
+                    // [修正] 同一隻敵人不重複注入：每次 renderUI 都重建 innerHTML 會讓
+                    // 漂浮動畫從頭重跑（選牌時明顯跳動），在 e-ink 上更會觸發整區重繪
                     const eKaoEl = document.getElementById('e-kao');
                     const enemyRow = eKaoEl.closest('.enemy-row');
-                    const svgMarkup = getSvgForEnemy(e);
+                    if (this._renderedKaoEnemy !== e) {
+                        this._renderedKaoEnemy = e;
+                        const svgMarkup = getSvgForEnemy(e);
 
-                    if (svgMarkup) {
-                        // SVG mode: inject defs + SVG with float animation
-                        const defsHtml = '<svg width="0" height="0" style="position:absolute"><defs><pattern id="dither-battle" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="currentColor" stroke="none"/><rect x="2" y="2" width="2" height="2" fill="currentColor" stroke="none"/></pattern></defs></svg>';
-                        const adjustedSvg = svgMarkup
-                            .replace(/dither-pattern-fairy/g, 'dither-battle')
-                            .replace('eink-sprite', 'eink-sprite sprite-float');
-                        eKaoEl.innerHTML = defsHtml + adjustedSvg;
-                        if (enemyRow) enemyRow.classList.add('svg-mode');
-                    } else {
-                        // Kaomoji fallback: plain text, restore decorator lines
-                        eKaoEl.innerText = e.kao;
-                        if (enemyRow) enemyRow.classList.remove('svg-mode');
+                        if (svgMarkup) {
+                            // SVG mode: inject defs + SVG with float animation
+                            const defsHtml = '<svg width="0" height="0" style="position:absolute"><defs><pattern id="dither-battle" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="currentColor" stroke="none"/><rect x="2" y="2" width="2" height="2" fill="currentColor" stroke="none"/></pattern></defs></svg>';
+                            const adjustedSvg = svgMarkup
+                                .replace(/dither-pattern-fairy/g, 'dither-battle')
+                                .replace('eink-sprite', 'eink-sprite sprite-float');
+                            eKaoEl.innerHTML = defsHtml + adjustedSvg;
+                            if (enemyRow) enemyRow.classList.add('svg-mode');
+                        } else {
+                            // Kaomoji fallback: plain text, restore decorator lines
+                            eKaoEl.innerText = e.kao;
+                            if (enemyRow) enemyRow.classList.remove('svg-mode');
+                        }
                     }
                     
                     // [新增] 敵人蓄力警告 (CD <= 1 時加 charge-blink 類別)
